@@ -1,0 +1,13 @@
+.Boton3D{
+    padding: 0.8rem 0.8rem;
+    font-size: 1.5rem;
+    border-radius: 50px;
+    box-shadow: var(--box-shadow-3D-textura);
+    color: var(--color-danger);
+    transition: all 0.3s ease-in-out;
+}
+
+.Boton3D:hover{
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+}
