@@ -1,5 +1,15 @@
 CHANGELOG - Prueba tecnica
 
+## [1.1.1] - Alexander colorado - 2025 - 08 - 17 [5:35pm]
+
+### add
+    - se genero el componente de form
+
+### fixed 
+    - se corrigieron algunos bugs con la conexion fastAPi
+
+
+
 ## [1.1.0] - Alexander colorado - 2025 - 08 - 15 [4:15pm]
 
 ### add

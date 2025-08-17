@@ -12,13 +12,13 @@ class EventoBase(BaseModel):
     lugar: str
 
 class EventoCreate(EventoBase):
-    pass  # Igual que EventoBase para creación
+    pass  
 
 class Evento(EventoBase):
     id: int
 
     class Config:
-        orm_mode = True  # Permite convertir desde SQLAlchemy a Pydantic
+        orm_mode = True 
 
 # ==============================
 # Inscripción

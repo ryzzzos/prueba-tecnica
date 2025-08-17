@@ -10,4 +10,11 @@ router = APIRouter()
 def listar_eventos(db: Session = Depends(get_db)):
     return db.query(models.Evento).all()
 
-
+#aqui creo un nuevo evento en la base de datos
+@router.post("/crear", response_model=schemas.Evento)
+def crear_evento(evento: schemas.EventoCreate, db: Session = Depends(get_db)):
+    nuevo_evento = models.Evento(**evento.dict())
+    db.add(nuevo_evento)
+    db.commit()
+    db.refresh(nuevo_evento)
+    return nuevo_evento

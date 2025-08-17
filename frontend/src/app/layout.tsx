@@ -1,5 +1,5 @@
 import './globals.css';
-import Navbar from './components/navbar/Navbar';
+import Navbar from './navbar/Navbar';
 import { montserrat } from './UI/fonts';
 
 export default function RootLayout({ children }) {
