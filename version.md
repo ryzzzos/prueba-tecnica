@@ -1,3 +1,6 @@
+## [1.1.2] - Alexander colorado - 2025 - 08 - 19 [3:59pm]
+- cambios en back, front y sistema de notificaciones
+
 ## [1.1.1] - Alexander colorado - 2025 - 08 - 17 [5:35pm]
     - avances en backend y en frontend
 

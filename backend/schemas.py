@@ -10,6 +10,7 @@ class EventoBase(BaseModel):
     descripcion: str
     fecha_hora: datetime
     lugar: str
+    imagen: str | None = None  # puede no venir
 
 class EventoCreate(EventoBase):
     pass  
@@ -19,6 +20,7 @@ class Evento(EventoBase):
 
     class Config:
         orm_mode = True 
+
 
 # ==============================
 # Inscripción

@@ -10,6 +10,8 @@ class Evento(Base):
     descripcion = Column(String, nullable=False)
     fecha_hora = Column(DateTime, nullable=False)
     lugar = Column(String, nullable=False)
+    imagen = Column(String, nullable=True)  
+
 
     inscripciones = relationship("Inscripcion", back_populates="evento")
 

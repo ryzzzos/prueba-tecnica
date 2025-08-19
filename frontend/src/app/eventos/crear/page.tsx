@@ -1,29 +1,42 @@
 "use client";
-import CrearEventoForm from "./CrearEventosForm";
-
+import CrearEventoForm from "./CrearEventoForm";
+import { useToast } from "../../components/ToastContext.tsx";
 
 export default function CrearEventoPage() {
-  const handleCrearEvento = async (data:any) => {
+  const { addToast } = useToast();
+  const handleCrearEvento = async (data: any) => {
     try {
+      const formData = new FormData();
+      formData.append("titulo", data.titulo);
+      formData.append("descripcion", data.descripcion);
+      formData.append("fecha_hora", data.fecha_hora);
+      formData.append("lugar", data.lugar);
+
+      if (data.imagen) {
+        formData.append("imagen", data.imagen); 
+      }
+
       const res = await fetch("http://127.0.0.1:8000/eventos/crear", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: formData,
       });
+
       if (res.ok) {
-        alert("Evento creado con éxito");
+          addToast("success", "Evento creado correctamente 🎉");
+
       } else {
-        alert("Error al crear evento");
+        const error = await res.json();
+        addToast("error",  "Error: " + error.detail);
+
       }
     } catch (error) {
       console.error(error);
-      alert("Error de conexión con el servidor");
+      addToast("error", "Error con el servidor al crear el evento");
     }
   };
 
   return (
     <div>
-      <h1>Crear Evento</h1>
       <CrearEventoForm onSubmit={handleCrearEvento} />
     </div>
   );
