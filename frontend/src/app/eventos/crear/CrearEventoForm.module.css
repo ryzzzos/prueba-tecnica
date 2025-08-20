@@ -51,7 +51,7 @@
 
 .previewImage {
   width: 100%;
-  height: 100%;
+
   border-radius: 50px;
   object-fit: cover;
 }
@@ -68,7 +68,7 @@
   min-height: 45px;
   resize: vertical;
   border-radius: 50px;
-    box-shadow: var(--box-shadow-3D-textura);
+  box-shadow: var(--box-shadow-3D-textura);
 
   padding: 0.5rem;
   background-color: var(--color-background-variant);
@@ -85,7 +85,7 @@
   height: 45px;
   border-radius: 50px;
   padding: 0.5rem;
-    box-shadow: var(--box-shadow-3D-textura);
+  box-shadow: var(--box-shadow-3D-textura);
 
   background-color: var(--color-background-variant);
   font-size: 0.8rem;

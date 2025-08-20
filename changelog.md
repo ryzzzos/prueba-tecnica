@@ -1,6 +1,17 @@
 
 # CHANGELOG - Prueba tecnica
 
+
+
+-----
+
+## [1.2.0] - Alexander colorado - 2025 - 08 - 20 [1:40pm]
+
+### add
+    - se completo el modulo de listar enetos e terminos generales
+    - se agrego las incripciones en el mismo modulo de insertar
+    - se agrego ver detalle del evento en el mismo modulo de listar evento
+
 -----
 
 ## [1.1.2] - Alexander colorado - 2025 - 08 - 19 [3:59pm]

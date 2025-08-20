@@ -1,30 +1,8 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
-# ==============================
-# Evento
-# ==============================
-class EventoBase(BaseModel):
-    titulo: str
-    descripcion: str
-    fecha_hora: datetime
-    lugar: str
-    imagen: str | None = None  # puede no venir
-
-class EventoCreate(EventoBase):
-    pass  
-
-class Evento(EventoBase):
-    id: int
-
-    class Config:
-        orm_mode = True 
-
-
-# ==============================
-# Inscripción
-# ==============================
+# -------- INSCRIPCION --------
 class InscripcionBase(BaseModel):
     nombre: str
     correo: str
@@ -35,6 +13,25 @@ class InscripcionCreate(InscripcionBase):
 class Inscripcion(InscripcionBase):
     id: int
     evento_id: int
+
+    class Config:
+        orm_mode = True
+
+
+# -------- EVENTO --------
+class EventoBase(BaseModel):
+    titulo: str
+    descripcion: str
+    fecha_hora: datetime
+    lugar: str
+    imagen: Optional[str] = None
+
+class EventoCreate(EventoBase):
+    pass
+
+class Evento(EventoBase):
+    id: int
+    inscripciones: List[Inscripcion] = []
 
     class Config:
         orm_mode = True

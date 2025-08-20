@@ -1,3 +1,9 @@
+# Versioning 
+
+
+## [1.2.0] - Alexander colorado - 2025 - 08 - 20 [1:40pm]
+- varios modulos terminados
+
 ## [1.1.2] - Alexander colorado - 2025 - 08 - 19 [3:59pm]
 - cambios en back, front y sistema de notificaciones
 

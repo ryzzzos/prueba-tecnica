@@ -11,8 +11,8 @@ export default function Navbar() {
       />
       <ul className={styles.menu}>
         <li><Link href="/">Inicio</Link></li>
-        <li><Link href="/eventos">Eventos</Link></li>
-        <li><Link href="/about">Acerca</Link></li>
+        <li><Link href="/eventos/listar">Eventos</Link></li>
+        <li><Link href="/eventos/crear">Crear</Link></li>
       </ul>
     </nav>
   );
