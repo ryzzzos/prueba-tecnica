@@ -5,11 +5,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 
-# Crear tablas en la base de datos
+# Crear tablas automáticamente en la base de datos
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+# Configuración de CORS (permite peticiones desde cualquier origen)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -18,9 +19,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-# Incluir el router de eventos
+# Registrar las rutas relacionadas con eventos
 app.include_router(eventos.router, prefix="/eventos", tags=["Eventos"])
 
-# Configurar el directorio estático para las imágenes
+# Servir archivos estáticos (imágenes subidas)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")

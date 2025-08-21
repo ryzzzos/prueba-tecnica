@@ -145,15 +145,17 @@
 
 .avatars {
   display: flex;
-  align-items: center;
+  cursor: pointer;
+  justify-content: center;
+  gap:3px; 
 }
 
 .avatars img {
-  width: 28px;
-  height: 28px;
+  width: 35px;
+  height: 35px;
   border-radius: 50%;
-  border: 2px solid #fff;
-  margin-left: -8px;
+  border: 1px solid #fff;
+  object-fit: cover;
 }
 
 .avatars img:first-child {
@@ -161,15 +163,15 @@
 }
 
 .more {
-  width: 28px;
-  height: 28px;
+  width: 35px;
+  height: 35px;
   background: rgba(255,255,255,0.3);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.8rem;
-  margin-left: -8px;
+
   color: white;
 }
 
@@ -214,6 +216,13 @@
   text-shadow: 0 2px 6px rgba(0,0,0,0.6);
   z-index: 3;
 }
+
+.arrowLeft span,
+.arrowRight span{
+  color: var(--color-dark);
+  font-size: 2rem;
+}
+
 
 .arrowLeft {
   left: 0.5rem;
@@ -260,4 +269,68 @@
   .informacion {
     border-radius: 0;
   }
+}
+
+
+/* -------- TABLA -------- */
+.extraCampos table {
+  width: 100%;
+  border-collapse: collapse; 
+}
+
+.extraCampos th,
+.extraCampos td {
+  border: 1px solid rgba(255, 255, 255, 0.2); 
+  padding: 8px;
+  text-align: left;
+  font-size: 0.9rem;
+  color: #fff; 
+}
+
+/* -------- SLIDER (form/lista) -------- */
+.extraCampos {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  margin: 0;             
+  padding: 0;           
+  transform: translateY(20px);
+  transition: all 0.4s ease-in-out;
+}
+
+.showCampos {
+  max-height: 600px;     
+  opacity: 1;
+  padding: 1rem 0;        
+  transform: translateY(0);
+}
+
+
+/* Contenedor scroll de asistentes */
+.asistentesScroll {
+  max-height: 200px;   
+  overflow-y: auto;    
+  margin-top: 0.5rem;
+}
+
+
+/* Estilo tabla dentro del scroll */
+.asistentesScroll table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+
+.asistentesScroll th {
+  background: rgba(255, 255, 255, 0.15);
+  font-weight: 600;
+  top: 0;
+}
+
+.asistentesScroll th,
+.asistentesScroll td {
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  padding: 8px;
+  text-align: left;
 }

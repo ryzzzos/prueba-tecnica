@@ -20,6 +20,7 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
+  // Elimina un toast con animación de salida
   const removeToast = (id: number) => {
     setToasts((prev) =>
       prev.map((t) => (t.id === id ? { ...t, exiting: true } : t))
@@ -29,6 +30,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     }, 400);
   };
 
+  // Agrega un nuevo toast y lo elimina automáticamente a los 5 segundos
   const addToast = (type: ToastType, message: string) => {
     const id = Date.now();
     setToasts((prev) => [...prev, { id, type, message }]);
@@ -47,7 +49,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             key={toast.id}
             className={`${Style.toast} ${Style[`toast-${toast.type}`]} ${toast.exiting ? Style.exit : ""}`}
           >
-            {/* Icono */}
+            {/* Icono de acuerdo al tipo de toast */}
             <div className={`${Style["toast-icon-box"]} ${Style[`toast-${toast.type}`]}`}>
               <span className={`material-symbols-outlined ${Style.icon}`}>
                 {toast.type === "success" && "check"}
@@ -57,7 +59,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               </span>
             </div>
 
-            {/* Mensaje */}
+            {/* Mensaje del toast */}
             <div className={Style["toast-message"]}>
               <strong>
                 {toast.type === "success" && "¡Éxito!"}
@@ -68,7 +70,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               <span>{toast.message}</span>
             </div>
 
-            {/* Botón cerrar */}
+            {/* Botón para cerrar manualmente */}
             <span
               className={`material-symbols-outlined ${Style.close}`}
               onClick={() => removeToast(toast.id)}
@@ -82,6 +84,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// Hook personalizado para acceder al contexto de toasts
 export function useToast() {
   const context = useContext(ToastContext);
   if (!context) throw new Error("useToast debe usarse dentro de ToastProvider");

@@ -13,3 +13,20 @@
     display: flex;
     gap: 20px;
 }
+
+.menu a {
+  color: var(--color-dark);
+  text-decoration: none; 
+}
+
+.menu a:visited {
+  color: var(--color-dark);
+}
+.menu a:hover {
+  color: var(--color-danger); 
+}
+
+.navbar li {
+    font-size: 1.2rem;
+    color: var(--color-dark);
+}

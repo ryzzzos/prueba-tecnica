@@ -1,5 +1,7 @@
 # Versioning 
 
+## [1.3.0] - Alexander colorado - 2025 - 08 - 21 [6:30pm]
+- se terminaron los modulos
 
 ## [1.2.0] - Alexander colorado - 2025 - 08 - 20 [1:40pm]
 - varios modulos terminados

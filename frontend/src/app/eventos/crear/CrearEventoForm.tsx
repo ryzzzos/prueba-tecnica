@@ -3,6 +3,7 @@ import { useState, ChangeEvent, FormEvent, useEffect } from "react";
 import styles from "./CrearEventoForm.module.css";
 import Boton3D from "../../components/Boton3D";
 
+// Interfaz que define los campos del formulario de evento
 interface EventoFormData {
   titulo: string;
   descripcion: string;
@@ -11,11 +12,13 @@ interface EventoFormData {
   imagen?: File;
 }
 
+// Props del componente, recibe la función onSubmit
 interface CrearEventoFormProps {
   onSubmit: (data: EventoFormData) => void;
 }
 
 export default function CrearEventoForm({ onSubmit }: CrearEventoFormProps) {
+  // Estado principal del formulario
   const [formData, setFormData] = useState<EventoFormData>({
     titulo: "",
     descripcion: "",
@@ -23,19 +26,22 @@ export default function CrearEventoForm({ onSubmit }: CrearEventoFormProps) {
     lugar: "",
   });
 
+  // Estado para la previsualización de la imagen
   const [preview, setPreview] = useState<string | null>(null);
 
-  // Limpia la URL anterior para evitar fugas de memoria
+  // Limpia la URL de la imagen anterior cuando cambia o se desmonta el componente
   useEffect(() => {
     return () => {
       if (preview) URL.revokeObjectURL(preview);
     };
   }, [preview]);
 
+  // Maneja cambios en los campos de texto
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // Maneja la selección de imagen y genera una URL de previsualización
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -46,9 +52,24 @@ export default function CrearEventoForm({ onSubmit }: CrearEventoFormProps) {
     }
   };
 
+  // Maneja el envío del formulario
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
+
+    // Reinicia los campos del formulario
+    setFormData({
+      titulo: "",
+      descripcion: "",
+      fecha_hora: "",
+      lugar: "",
+      imagen: undefined,
+    });
+    setPreview(null);
+
+    // Limpia el input de archivo manualmente
+    const fileInput = document.querySelector<HTMLInputElement>('input[type="file"]');
+    if (fileInput) fileInput.value = "";
   };
 
   return (
@@ -102,6 +123,7 @@ export default function CrearEventoForm({ onSubmit }: CrearEventoFormProps) {
         <Boton3D text="Crear Evento" type="submit" />
       </aside>
 
+      {/* Contenedor derecho para subir o mostrar la imagen */}
       <aside className={`${styles.asideRight} ${preview ? styles.imageLoaded : ""}`}>
         {!preview && (
           <label className={styles.uploadLabel}>

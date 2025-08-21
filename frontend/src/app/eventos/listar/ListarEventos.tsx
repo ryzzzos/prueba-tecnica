@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react"
 import styles from "./ListarEventos.module.css"
+import { useToast } from "../../components/ToastContext.tsx";
 
+/* Tipos de datos del dominio */
 interface Evento {
   id: number
   titulo: string
@@ -20,14 +22,18 @@ interface Asistente {
 }
 
 export default function ListarEventos() {
+  const { addToast } = useToast();
+
+  /* Estado local del componente */
   const [eventos, setEventos] = useState<Evento[]>([])
-  const [activeIndex, setActiveIndex] = useState(0)
-  const [formActivo, setFormActivo] = useState(false)
+  const [activeIndex, setActiveIndex] = useState(0)          // índice del evento visible
+  const [formActivo, setFormActivo] = useState(false)        // controla el slide del formulario
+  const [listaActiva, setListaActiva] = useState(false)      // controla el slide de la lista de asistentes
   const [nombre, setNombre] = useState("")
   const [correo, setCorreo] = useState("")
   const [asistentes, setAsistentes] = useState<Asistente[]>([])
-
-  // -------- GET EVENTOS (una sola vez al cargar) --------
+  
+  /* GET eventos: se ejecuta una sola vez al montar */
   useEffect(() => {
     fetch("http://localhost:8000/eventos")
       .then((res) => res.json())
@@ -35,7 +41,7 @@ export default function ListarEventos() {
       .catch(() => setEventos([]))
   }, [])
 
-  // -------- GET ASISTENTES (cuando cambia de evento) --------
+  /* GET asistentes: se ejecuta cuando cambia el evento activo */
   useEffect(() => {
     if (!eventos[activeIndex]) return
 
@@ -45,9 +51,9 @@ export default function ListarEventos() {
       .catch(() => setAsistentes([]))
   }, [activeIndex, eventos])
 
-  // -------- POST INSCRIPCIÓN --------
+  /* POST inscripción del usuario al evento actual */
   const handleSubmit = async () => {
-    if (!nombre || !correo) return alert("Por favor completa todos los campos")
+    if (!nombre || !correo) return addToast("warning", "Por favor completa todos los campos")
 
     const body = {
       evento_id: eventos[activeIndex].id,
@@ -62,20 +68,25 @@ export default function ListarEventos() {
         body: JSON.stringify(body),
       })
 
-      if (!res.ok) throw new Error("Error al guardar asistencia")
+      // Si el backend responde error, propaga el detalle para el toast
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.detail || "Error al inscribirse") 
+      }
 
+      // Éxito: agrega el nuevo asistente y resetea el formulario de inscripción
       const nuevo = await res.json()
       setAsistentes((prev) => [...prev, nuevo])
       setFormActivo(false)
       setNombre("")
       setCorreo("")
-    } catch (err) {
+    } catch (err: any) {
       console.error(err)
-      alert("Hubo un problema registrando la asistencia")
+      addToast("error", err.message) 
     }
   }
 
-  // -------- Cambiar evento --------
+  /* Navegación entre tarjetas de eventos */
   const next = () => {
     setFormActivo(false)
     setActiveIndex((prev) => (prev < eventos.length - 1 ? prev + 1 : prev))
@@ -86,6 +97,7 @@ export default function ListarEventos() {
     setActiveIndex((prev) => (prev > 0 ? prev - 1 : prev))
   }
 
+  /* Render principal: carrusel + info + formulario + lista de asistentes */
   return (
     <div className={styles.wrapper}>
       {/* Flecha izquierda */}
@@ -106,7 +118,7 @@ export default function ListarEventos() {
               className={styles.image}
             />
 
-            {/* Información */}
+            {/* Panel inferior con datos + acciones (se expande/colapsa) */}
             <div className={`${styles.informacion} ${formActivo ? styles.expandida : ""}`}>
               {formActivo && (
                 <span
@@ -119,6 +131,7 @@ export default function ListarEventos() {
 
               <h3>{eventos[activeIndex].titulo}</h3>
 
+              {/* Metadatos del evento */}
               <div className={styles.contgrupito}>
                 <div className={styles.grupito}>
                   <span className="material-symbols-outlined">location_on</span>
@@ -142,25 +155,30 @@ export default function ListarEventos() {
               <hr className={styles.divider} />
 
               <div className={styles.footerCard}>
-                {/* avatares dinámicos */}
-                <div className={styles.avatars}>
+                {/* Avatares: al hacer click, alterna la lista de asistentes */}
+                <div
+                  className={styles.avatars}
+                  onClick={() => setListaActiva((prev) => !prev)} 
+                >
                   {asistentes.slice(0, 3).map((a) => (
                     <div key={a.id} className={styles.avatar}>
-                      {a.nombre[0].toUpperCase()}
+                      <img src={`https://robohash.org/${a.id}`} alt="" />
                     </div>
                   ))}
                   {asistentes.length > 3 && (
                     <span className={styles.more}>+{asistentes.length - 3}</span>
                   )}
                 </div>
+                
+                {/* Abre el slide del formulario */}
                 <button className={styles.joinBtn} onClick={() => setFormActivo(true)}>
                   Ir
                 </button>
               </div>
 
-              {/* Formulario */}
+              {/* Formulario de inscripción (slide) */}
               <div className={`${styles.extraCampos} ${formActivo ? styles.showCampos : ""}`}>
-                <p >{eventos[activeIndex].descripcion}</p>
+                <p>{eventos[activeIndex].descripcion}</p>
                 <input
                   type="text"
                   placeholder="Nombre"
@@ -179,6 +197,29 @@ export default function ListarEventos() {
                   Confirmar asistencia
                 </button>
               </div>
+
+              {/* Lista de asistentes (slide con scroll interno) */}
+              <div className={`${styles.extraCampos} ${listaActiva ? styles.showCampos : ""}`}>
+                <div className={styles.asistentesScroll}>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Nombre</th>
+                        <th>Correo</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {asistentes.map((a) => (
+                        <tr key={a.id}>
+                          <td>{a.nombre}</td>
+                          <td>{a.correo}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
             </div>
           </div>
         )}
@@ -189,7 +230,7 @@ export default function ListarEventos() {
         <span className="material-symbols-outlined">arrow_forward_ios</span>
       </button>
 
-      {/* Selector tipo historias */}
+      {/* Indicadores inferiores del carrusel */}
       <div className={styles.progress}>
         {eventos.map((_, i) => (
           <div

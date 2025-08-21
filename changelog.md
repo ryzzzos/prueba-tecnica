@@ -1,8 +1,16 @@
 
 # CHANGELOG - Prueba tecnica
 
+-----
 
+## [1.3.0] - Alexander colorado - 2025 - 08 - 21 [6:30pm]
 
+### add
+    - se implemento la lista de inscritos a un evento con un doble slider
+    - se cambio back para listar los eventos como en los requerimentos
+    - se implemento toast en mas partes del software
+    - se genero readme
+    
 -----
 
 ## [1.2.0] - Alexander colorado - 2025 - 08 - 20 [1:40pm]
