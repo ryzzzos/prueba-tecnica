@@ -80,6 +80,7 @@ export default function ListarEventos() {
       setFormActivo(false)
       setNombre("")
       setCorreo("")
+      addToast("success", "¡Inscripción confirmada!")
     } catch (err: any) {
       console.error(err)
       addToast("error", err.message) 

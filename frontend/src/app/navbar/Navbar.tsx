@@ -1,6 +1,7 @@
 import Link from "next/link";
 import styles from "./Navbar.module.css"; 
 import Image from "next/image";   
+import logo from "./logo.png"
 
 export default function Navbar() {
   return (
@@ -9,10 +10,11 @@ export default function Navbar() {
 
       {/* Logo de la aplicación */}
       <Image 
-        src="https://lynxus.biz/uploads/general/logo-lynxus-alt-0.svg" 
-        alt="Lynxus Logo"
-        width={120}
-        height={60}
+      src={logo} 
+      alt="Lynxus Logo"
+      width={150}
+      height={50} 
+      style={{ objectFit: "contain" }} 
       />
 
       {/* Menú de navegación */}
@@ -21,7 +23,6 @@ export default function Navbar() {
         <li><Link href="/eventos/listar">Eventos</Link></li>
         <li><Link href="/eventos/crear">Crear</Link></li>
       </ul>
-      
     </nav>
   );
 }

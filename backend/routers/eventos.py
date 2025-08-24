@@ -58,12 +58,13 @@ def crear_evento(
     fecha_hora: datetime = Form(...),
     lugar: str = Form(...),
     imagen: UploadFile = File(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     # Validar textos
     titulo_clean = _validate_text_field("Título", titulo, max_len=200)
     descripcion_clean = _validate_text_field("Descripción", descripcion, max_len=4000)
     lugar_clean = _validate_text_field("Lugar", lugar, max_len=200)
+
 
     # Validar fecha futura
     ahora = datetime.now()
@@ -72,6 +73,7 @@ def crear_evento(
             status_code=400,
             detail="La fecha del evento debe ser mayor a la fecha actual"
         )
+
 
     ruta_imagen = None
     # Validar imagen y guardarla en disco (si se proporciona)
@@ -86,7 +88,7 @@ def crear_evento(
         ext = ext.lower()
         if ext not in ALLOWED_IMAGE_EXT:
             raise HTTPException(status_code=400, detail="Formato de imagen no válido. Use PNG o JPG.")
-
+        
         # crear filename seguro y ruta
         safe_name = _secure_filename(filename)
         ruta_imagen = os.path.join(UPLOAD_DIR, safe_name)
