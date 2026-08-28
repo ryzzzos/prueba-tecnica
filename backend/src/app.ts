@@ -5,6 +5,7 @@ import { requestLogger } from './middlewares/requestLogger.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { healthRoutes } from './routes/health.routes.js';
 import { categoryRoutes } from './routes/category.routes.js';
+import { productRoutes } from './routes/product.routes.js';
 import { promotionRoutes } from './routes/promotion.routes.js';
 
 export const createApp = (): Express => {
@@ -30,17 +31,19 @@ export const createApp = (): Express => {
 
   // API v1 Routes
   app.use('/api/v1/categories', categoryRoutes);
+  app.use('/api/v1/products', productRoutes);
   app.use('/api/v1/promotions', promotionRoutes);
 
   // Welcome Route
   app.get('/', (_req: Request, res: Response) => {
     res.json({
-      name: 'Promotions Management API',
-      version: '1.0.0',
+      name: 'Promotions & Products Management API',
+      version: '1.1.0',
       status: 'online',
       endpoints: {
         health: '/health',
         categories: '/api/v1/categories',
+        products: '/api/v1/products',
         promotions: '/api/v1/promotions',
         summary: '/api/v1/promotions/summary',
       },

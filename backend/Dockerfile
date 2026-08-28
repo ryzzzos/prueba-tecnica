@@ -20,7 +20,7 @@ COPY tsconfig.json ./
 COPY src ./src/
 
 # Generate Prisma client and compile TypeScript to JavaScript
-RUN pnpm prisma generate && pnpm tsc
+RUN pnpm prisma:generate && pnpm tsc
 
 # ==========================================
 # Stage 2: Production Runtime
@@ -48,10 +48,10 @@ RUN pnpm install --prod
 COPY --from=builder /app/dist ./dist
 
 # Re-generate Prisma client in production node_modules
-RUN pnpm prisma generate
+RUN pnpm prisma:generate
 
 # Expose HTTP port
 EXPOSE 8000
 
 # Entrypoint: Apply pending migrations, seed default categories, and start Express server
-CMD ["sh", "-c", "pnpm prisma migrate deploy && pnpm prisma:seed && node dist/server.js"]
+CMD ["sh", "-c", "pnpm prisma:deploy && pnpm prisma:seed && node dist/server.js"]

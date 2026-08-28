@@ -4,28 +4,35 @@
 
 /* Design Tokens & CSS Variables Standard */
 :root {
-  /* Brand Accent */
-  --app-primary: #4f46e5;
-  --app-primary-strong: #4338ca;
-  --app-primary-subtle: rgba(79, 70, 229, 0.08);
+  /* Brand Gradient: Royal Blue (#1d4ed8 / #2563eb) -> Vivid Purple (#9333ea) -> Fuchsia/Magenta (#c026d3) */
+  --app-primary: #2563eb;
+  --app-primary-strong: #1d4ed8;
+  --app-primary-subtle: rgba(37, 99, 235, 0.08);
+  --app-accent-purple: #9333ea;
+  --app-accent-fuchsia: #c026d3;
 
-  /* Light Theme Surfaces */
-  --surface-0: #e2e8f0;
-  --surface-1: #f8fafc;
+  --brand-gradient: linear-gradient(135deg, #1d4ed8 0%, #2563eb 30%, #9333ea 70%, #c026d3 100%);
+  --brand-gradient-horizontal: linear-gradient(90deg, #1d4ed8 0%, #2563eb 35%, #9333ea 75%, #c026d3 100%);
+  --brand-gradient-subtle: linear-gradient(135deg, rgba(37, 99, 235, 0.06) 0%, rgba(147, 51, 234, 0.06) 50%, rgba(192, 38, 211, 0.06) 100%);
+  --brand-gradient-glow: linear-gradient(135deg, rgba(37, 99, 235, 0.25) 0%, rgba(147, 51, 234, 0.25) 50%, rgba(192, 38, 211, 0.25) 100%);
+
+  /* Light Theme Surfaces (Apple Standard / Citas) */
+  --surface-0: #dddddd;
+  --surface-1: #f1f5f9;
   --surface-2: #ffffff;
-  --surface-3: #f1f5f9;
-  --surface-glass: rgba(255, 255, 255, 0.78);
+  --surface-3: #f8fafc;
+  --surface-glass: rgba(255, 255, 255, 0.75);
 
-  /* Borders */
-  --border-soft: #e2e8f0;
-  --border-strong: #cbd5e1;
-  --glass-border: rgba(255, 255, 255, 0.7);
+  /* Light Theme Borders */
+  --border-soft: rgba(255, 255, 255, 0.5);
+  --border-strong: rgb(226, 232, 240);
+  --glass-border: rgba(255, 255, 255, 0.4);
 
   /* Shadows (Elevations) */
-  --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.03);
-  --shadow-md: 0 4px 14px -2px rgba(15, 23, 42, 0.07), 0 2px 6px -2px rgba(15, 23, 42, 0.04);
-  --shadow-lg: 0 16px 32px -4px rgba(15, 23, 42, 0.09), 0 4px 12px -4px rgba(15, 23, 42, 0.04);
-  --glass-shadow: 0 8px 32px -8px rgba(15, 23, 42, 0.08);
+  --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.08), 0 2px 6px -2px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 12px 28px -4px rgba(15, 23, 42, 0.10), 0 4px 12px -4px rgba(15, 23, 42, 0.05);
+  --glass-shadow: 0 8px 32px -12px rgba(15, 23, 42, 0.12);
 
   /* Typography Colors */
   --text-primary: #0f172a;
@@ -33,66 +40,75 @@
   --text-muted: #64748b;
 
   /* Border Radii Hierarchy */
-  --radius-xs: 0.375rem;
-  --radius-sm: 0.5rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1rem;
-  --radius-xl: 1.25rem;
-  --radius-2xl: 1.5rem;
+  --radius-xs: 0.5rem;
+  --radius-sm: 0.75rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 1.75rem;
 
-  /* Semantic Status Colors */
-  --color-programmed: #6366f1;
+  /* Semantic Status Colors (From Citas) */
+  --color-pending: #f59e0b;
+  --color-warnm: #ff6b35;
+  --color-info: #007aff;
+  --color-error: #ff3b30;
+  --color-success: #10b981;
+  --color-programmed: #9333ea;
   --color-active: #10b981;
   --color-finished: #64748b;
-  --color-pending: #f59e0b;
-  --color-info: #0284c7;
-  --color-error: #ef4444;
-  --color-success: #10b981;
 }
 
 /* Dark Theme Variables */
 .dark {
-  --app-primary: #6366f1;
-  --app-primary-strong: #4f46e5;
-  --app-primary-subtle: rgba(99, 102, 241, 0.15);
+  --app-primary: #3b82f6;
+  --app-primary-strong: #2563eb;
+  --app-primary-subtle: rgba(59, 130, 246, 0.15);
+  --app-accent-purple: #a855f7;
+  --app-accent-fuchsia: #d946ef;
 
-  /* Dark Theme Surfaces */
-  --surface-0: #090d16;
-  --surface-1: #0f172a;
-  --surface-2: #1e293b;
-  --surface-3: #273549;
-  --surface-glass: rgba(30, 41, 59, 0.78);
+  --brand-gradient: linear-gradient(135deg, #2563eb 0%, #3b82f6 30%, #a855f7 70%, #d946ef 100%);
+  --brand-gradient-horizontal: linear-gradient(90deg, #2563eb 0%, #3b82f6 35%, #a855f7 75%, #d946ef 100%);
+  --brand-gradient-subtle: linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(168, 85, 247, 0.12) 50%, rgba(217, 70, 239, 0.12) 100%);
+  --brand-gradient-glow: linear-gradient(135deg, rgba(37, 99, 235, 0.35) 0%, rgba(168, 85, 247, 0.35) 50%, rgba(217, 70, 239, 0.35) 100%);
+
+  /* Dark Theme Surfaces (From Citas) */
+  --surface-0: #09090b;
+  --surface-1: #111113;
+  --surface-2: #18181b;
+  --surface-3: #27272a;
+  --surface-glass: rgba(24, 24, 27, 0.55);
 
   /* Dark Borders */
-  --border-soft: rgba(255, 255, 255, 0.07);
-  --border-strong: rgba(255, 255, 255, 0.14);
+  --border-soft: rgba(255, 255, 255, 0.06);
+  --border-strong: rgba(255, 255, 255, 0.12);
   --glass-border: rgba(255, 255, 255, 0.1);
 
   /* Dark Shadows */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.55);
-  --glass-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 24px 48px rgba(0, 0, 0, 0.45);
+  --glass-shadow: 0 8px 32px -12px rgba(0, 0, 0, 0.45);
 
   /* Dark Typography Colors */
-  --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --text-muted: #94a3b8;
+  --text-primary: #fafafa;
+  --text-secondary: #d4d4d8;
+  --text-muted: #a1a1aa;
 
   /* Dark Status Colors */
-  --color-programmed: #818cf8;
-  --color-active: #34d399;
-  --color-finished: #94a3b8;
   --color-pending: #fbbf24;
+  --color-warnm: #ff8c42;
   --color-info: #38bdf8;
   --color-error: #f87171;
   --color-success: #34d399;
+  --color-programmed: #a855f7;
+  --color-active: #34d399;
+  --color-finished: #94a3b8;
 }
 
-/* Base Document Styles */
+/* Base Document Styles - Apple San Francisco Typography Standard */
 html,
 body {
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  font-family: 'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'San Francisco', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   color: var(--text-primary);
   background-color: var(--surface-1);
   min-height: 100vh;
@@ -101,12 +117,13 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
 }
 
-/* Premium Scrollbar */
+/* Custom Scrollbar - Premium MacOS Style (From Citas) */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
@@ -114,22 +131,75 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
-  border-radius: var(--radius-lg);
+  background-color: var(--border-strong);
+  border-radius: 20px;
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+  background-color: var(--text-muted);
+}
+
+/* Firefox Support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
 }
 
 /* Utility Animations and Layers */
 @layer utilities {
+  .bg-primary-gradient {
+    background: var(--brand-gradient-horizontal);
+  }
+
+  .bg-brand-gradient {
+    background: var(--brand-gradient);
+  }
+
+  .bg-brand-subtle {
+    background: var(--brand-gradient-subtle);
+  }
+
+  .text-brand-gradient {
+    background: var(--brand-gradient-horizontal);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
   .backdrop-blur-glass {
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
 
   .text-balance {
     text-wrap: balance;
   }
+
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Sileo Toast Theme Overrides */
+:root {
+  --sileo-fill: #0f172a !important;
+  --sileo-text: #ffffff !important;
+  --sileo-z-index: 2147483647 !important;
+}
+
+.dark {
+  --sileo-fill: #ffffff !important;
+  --sileo-text: #09090b !important;
+}
+
+[data-sileo-viewport],
+[data-sileo-toast],
+[data-sileo-viewport] * {
+  z-index: 2147483647 !important;
 }

@@ -1,0 +1,28 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install OpenSSL for Prisma and curl/wget for healthcheck
+RUN apk add --no-cache openssl wget
+
+# Enable pnpm
+RUN corepack enable && corepack prepare pnpm@10.32.1 --activate
+
+# Copy package definitions and prisma schema
+COPY package.json pnpm-lock.yaml ./
+COPY prisma ./prisma/
+
+# Install all dependencies (including devDependencies for tsx and watch mode)
+RUN pnpm install
+
+# Copy source code and configuration
+COPY tsconfig.json ./
+COPY src ./src/
+
+# Generate Prisma client
+RUN pnpm prisma:generate
+
+EXPOSE 8000
+
+# Start server in watch mode with automatic migrations and seed
+CMD ["sh", "-c", "pnpm prisma:deploy && pnpm prisma:seed && pnpm dev"]

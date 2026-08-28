@@ -15,7 +15,7 @@ export const StatusChip: React.FC<StatusChipProps> = ({ status, size = 'sm' }) =
         <Chip
           size={size}
           variant="solid"
-          className="bg-indigo-600 text-white font-medium shadow-sm"
+          className="bg-[var(--color-programmed)] text-white font-medium shadow-[var(--shadow-sm)]"
           startContent={<Clock className="w-3.5 h-3.5 text-white mr-1" />}
         >
           Programada
@@ -26,7 +26,7 @@ export const StatusChip: React.FC<StatusChipProps> = ({ status, size = 'sm' }) =
         <Chip
           size={size}
           variant="solid"
-          className="bg-emerald-600 text-white font-medium shadow-sm"
+          className="bg-[var(--color-active)] text-white font-medium shadow-[var(--shadow-sm)]"
           startContent={<CheckCircle2 className="w-3.5 h-3.5 text-white mr-1" />}
         >
           Activa
@@ -37,7 +37,7 @@ export const StatusChip: React.FC<StatusChipProps> = ({ status, size = 'sm' }) =
         <Chip
           size={size}
           variant="solid"
-          className="bg-slate-600 text-white font-medium shadow-sm"
+          className="bg-[var(--color-finished)] text-white font-medium shadow-[var(--shadow-sm)]"
           startContent={<Archive className="w-3.5 h-3.5 text-white mr-1" />}
         >
           Finalizada

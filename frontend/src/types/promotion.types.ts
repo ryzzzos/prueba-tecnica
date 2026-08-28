@@ -2,10 +2,14 @@ export type DiscountType = 'PERCENTAGE' | 'FIXED_AMOUNT';
 
 export type PromotionStatus = 'PROGRAMMED' | 'ACTIVE' | 'FINISHED';
 
+export type PromotionScopeType = 'CATEGORY' | 'PRODUCT';
+
 export interface Category {
   id: string;
   name: string;
   description?: string | null;
+  position?: number;
+  isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -13,11 +17,30 @@ export interface Category {
 export interface Promotion {
   id: string;
   name: string;
-  categoryId: string;
-  category: {
+  scopeType?: PromotionScopeType;
+  categoryId?: string | null;
+  category?: {
     id: string;
     name: string;
-  };
+  } | null;
+  productId?: string | null;
+  product?: {
+    id: string;
+    name: string;
+    price: number | string;
+    imageUrl?: string | null;
+  } | null;
+  categories?: Array<{
+    id: string;
+    name: string;
+  }>;
+  products?: Array<{
+    id: string;
+    name: string;
+    price: number | string;
+    imageUrl?: string | null;
+    categoryId?: string | null;
+  }>;
   discountType: DiscountType;
   discountValue: number | string;
   startDate: string;
@@ -38,7 +61,11 @@ export interface PromotionSummary {
 
 export interface CreatePromotionPayload {
   name: string;
-  categoryId: string;
+  scopeType?: PromotionScopeType;
+  categoryId?: string | null;
+  categoryIds?: string[];
+  productId?: string | null;
+  productIds?: string[];
   discountType: DiscountType;
   discountValue: number;
   startDate: string;
@@ -48,7 +75,11 @@ export interface CreatePromotionPayload {
 
 export interface UpdatePromotionPayload {
   name?: string;
-  categoryId?: string;
+  scopeType?: PromotionScopeType;
+  categoryId?: string | null;
+  categoryIds?: string[];
+  productId?: string | null;
+  productIds?: string[];
   discountType?: DiscountType;
   discountValue?: number;
   startDate?: string;
@@ -59,6 +90,7 @@ export interface UpdatePromotionPayload {
 export interface PromotionFilterParams {
   status?: PromotionStatus;
   categoryId?: string;
+  productId?: string;
   search?: string;
 }
 

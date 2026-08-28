@@ -50,27 +50,31 @@ Sistema web para el registro, consulta y control del ciclo de vida de promocione
 
 ---
 
-## Ejecucion con Docker Compose (Recomendado)
+## Ejecucion con Docker Compose
 
-### 1. Clonar el repositorio y configurar variables de entorno
+Existen dos entornos configurados mediante Docker:
+
+### A. Modo Desarrollo con Hot Reload (Recomendado para programar)
+Permite hacer cambios en el codigo fuente y ver las actualizaciones en tiempo real sin reiniciar contenedores:
+
 ```bash
-cp .env.example .env
+docker compose -f docker-compose.dev.yml up --build
 ```
 
-### 2. Levantar el ecosistema completo
+* **Frontend (Vite HMR):** [http://localhost:5173](http://localhost:5173) (detecta cambios en vivo con recarga instantanea).
+* **Backend (tsx watch):** [http://localhost:8000](http://localhost:8000) (reinicia automaticamente al guardar archivos TypeScript).
+* **Base de datos (PostgreSQL 16):** Puerto `5432`.
+
+### B. Modo Produccion (Compilado y optimizado con Nginx)
+Simula el despliegue final en un servidor de produccion:
+
 ```bash
 docker compose up --build -d
 ```
 
-Este comando:
-1. Levanta la base de datos **PostgreSQL 16** y verifica su estado de salud (`pg_isready`).
-2. Levanta el **Backend**, aplica automáticamente las migraciones (`prisma migrate deploy`), precarga las categorías iniciales (`prisma db seed`) y expone la API en el puerto `8000`.
-3. Levanta el **Frontend** con Nginx y lo expone en el puerto `3000`.
-
-### 3. Acceder a los servicios
-* **Frontend Web:** [http://localhost:3000](http://localhost:3000)
-* **Backend API:** [http://localhost:8000](http://localhost:8000)
-* **Healthcheck:** [http://localhost:8000/health](http://localhost:8000/health)
+* **Frontend (Nginx SPA):** [http://localhost:3000](http://localhost:3000) (assets comprimidos y optimizados).
+* **Backend (Node.js dist):** [http://localhost:8000](http://localhost:8000).
+* **Healthcheck:** [http://localhost:8000/health](http://localhost:8000/health).
 
 ---
 
@@ -124,6 +128,7 @@ cd frontend && pnpm build
 
 ## Endpoints de la API REST
 
+### Modulo de Promociones
 | Metodo | Endpoint | Descripcion |
 | :--- | :--- | :--- |
 | `GET` | `/health` | Healthcheck que verifica conectividad activa con PostgreSQL |
@@ -134,7 +139,26 @@ cd frontend && pnpm build
 | `PUT` | `/api/v1/promotions/:id` | Modificacion de promocion (restringido si esta `FINALIZADA`) |
 | `PATCH` | `/api/v1/promotions/:id/status` | Transicion de estado (`PROGRAMMED` -> `ACTIVE` -> `FINISHED`) |
 | `DELETE` | `/api/v1/promotions/:id` | Eliminacion (permitida **unicamente** en estado `PROGRAMMED`) |
-| `GET` | `/api/v1/categories` | Listado de categorias comerciales disponibles para el POS |
+
+### Modulo de Catalogo y Productos
+| Metodo | Endpoint | Descripcion |
+| :--- | :--- | :--- |
+| `GET` | `/api/v1/products/metrics` | Metricas del catalogo (total, activos, bajo stock, valor) |
+| `GET` | `/api/v1/products` | Listado de productos (filtros: `search`, `categoryId`, `active`, `lowStock`) |
+| `GET` | `/api/v1/products/:id` | Consulta de producto por ID |
+| `POST` | `/api/v1/products` | Creacion de producto con SKU unico y validacion |
+| `PUT` | `/api/v1/products/:id` | Actualizacion de producto |
+| `PATCH` | `/api/v1/products/:id/toggle` | Alternar estado de activacion de producto |
+| `DELETE` | `/api/v1/products/:id` | Eliminacion segura de producto |
+
+### Modulo de Categorias
+| Metodo | Endpoint | Descripcion |
+| :--- | :--- | :--- |
+| `GET` | `/api/v1/categories` | Listado de categorias comerciales con conteo de productos |
+| `GET` | `/api/v1/categories/:id` | Consulta de categoria individual |
+| `POST` | `/api/v1/categories` | Creacion de nueva categoria comercial |
+| `PUT` | `/api/v1/categories/:id` | Actualizacion de categoria |
+| `DELETE` | `/api/v1/categories/:id` | Eliminacion de categoria (valida dependencias) |
 
 ---
 

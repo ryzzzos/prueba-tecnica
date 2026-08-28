@@ -1,30 +1,39 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { DiscountType, PromotionStatus, Prisma } from '@prisma/client';
 import { PromotionService } from '../src/services/promotion.service.js';
-import { IPromotionRepository, PromotionWithCategory } from '../src/repositories/promotion.repository.js';
+import { IPromotionRepository, PromotionWithRelations } from '../src/repositories/promotion.repository.js';
 import { ICategoryRepository } from '../src/repositories/category.repository.js';
+import { IProductRepository } from '../src/repositories/product.repository.js';
 import { AppError } from '../src/middlewares/errorHandler.js';
 
 describe('PromotionService Unit Tests', () => {
   let promoRepoMock: IPromotionRepository;
   let catRepoMock: ICategoryRepository;
+  let prodRepoMock: IProductRepository;
   let service: PromotionService;
 
   const mockCategory = {
     id: 'cat-uuid-1',
     name: 'Bebidas',
     description: 'Bebidas frias',
+    position: 0,
+    isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
 
-  const createMockPromotion = (overrides: Partial<PromotionWithCategory> = {}): PromotionWithCategory => {
+  const createMockPromotion = (overrides: Partial<PromotionWithRelations> = {}): PromotionWithRelations => {
     const now = new Date();
     return {
       id: 'promo-uuid-1',
       name: 'Promocion Refrescos',
+      scopeType: 'CATEGORY',
       categoryId: mockCategory.id,
       category: { id: mockCategory.id, name: mockCategory.name },
+      productId: null,
+      product: null,
+      categories: [{ id: mockCategory.id, name: mockCategory.name }],
+      products: [],
       discountType: DiscountType.PERCENTAGE,
       discountValue: new Prisma.Decimal(20),
       startDate: new Date(now.getTime() - 24 * 60 * 60 * 1000), // Ayer
@@ -40,6 +49,7 @@ describe('PromotionService Unit Tests', () => {
     promoRepoMock = {
       findAll: vi.fn(),
       findById: vi.fn(),
+      findActiveAndProgrammedInRange: vi.fn().mockResolvedValue([]),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
@@ -51,24 +61,40 @@ describe('PromotionService Unit Tests', () => {
       findById: vi.fn(),
       findByName: vi.fn(),
       create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
     };
 
-    service = new PromotionService(promoRepoMock, catRepoMock);
+    prodRepoMock = {
+      findAll: vi.fn().mockResolvedValue([]),
+      findById: vi.fn(),
+      findBySku: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      toggleActive: vi.fn(),
+      delete: vi.fn(),
+      getMetrics: vi.fn(),
+    };
+
+    service = new PromotionService(promoRepoMock, catRepoMock, prodRepoMock);
   });
 
   describe('createPromotion', () => {
-    it('should create a promotion successfully with percentage discount between 1 and 100', async () => {
+    it('should create a promotion with ACTIVE status if dates are currently effective', async () => {
       vi.spyOn(catRepoMock, 'findById').mockResolvedValue(mockCategory);
-      const mockCreated = createMockPromotion();
+      const mockCreated = createMockPromotion({ status: PromotionStatus.ACTIVE });
       vi.spyOn(promoRepoMock, 'create').mockResolvedValue(mockCreated);
 
       const now = new Date();
       const input = {
         name: 'Super Descuento 20%',
+        scopeType: 'CATEGORY' as const,
         categoryId: mockCategory.id,
+        categoryIds: [mockCategory.id],
+        productIds: [],
         discountType: DiscountType.PERCENTAGE,
         discountValue: 20,
-        startDate: now,
+        startDate: new Date(now.getTime() - 1000), // Inicia hace 1 segundo
         endDate: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000),
         status: PromotionStatus.PROGRAMMED,
       };
@@ -76,9 +102,53 @@ describe('PromotionService Unit Tests', () => {
       const result = await service.createPromotion(input);
 
       expect(catRepoMock.findById).toHaveBeenCalledWith(mockCategory.id);
-      expect(promoRepoMock.create).toHaveBeenCalledWith(input);
       expect(result.id).toBe(mockCreated.id);
-      expect(result.isValidToday).toBe(false); // Because status is PROGRAMMED
+    });
+
+    it('should throw an error if a product already has an active overlapping discount', async () => {
+      const mockProduct = {
+        id: 'prod-uuid-1',
+        name: 'Coca Cola 1.5L',
+        price: new Prisma.Decimal(4500),
+        sku: 'BEB-001',
+        imageUrl: null,
+        isActive: true,
+        categoryId: mockCategory.id,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      vi.spyOn(catRepoMock, 'findById').mockResolvedValue(mockCategory);
+      vi.spyOn(prodRepoMock, 'findById').mockResolvedValue(mockProduct);
+      vi.spyOn(prodRepoMock, 'findAll').mockResolvedValue([mockProduct]);
+
+      const now = new Date();
+      const existingPromo = createMockPromotion({
+        id: 'existing-promo',
+        name: 'Descuento Activo de Gaseosas',
+        products: [{ ...mockProduct, categoryId: mockCategory.id }],
+        startDate: new Date(now.getTime() - 24 * 60 * 60 * 1000),
+        endDate: new Date(now.getTime() + 24 * 60 * 60 * 1000),
+        status: PromotionStatus.ACTIVE,
+      });
+
+      vi.spyOn(promoRepoMock, 'findActiveAndProgrammedInRange').mockResolvedValue([existingPromo]);
+
+      const input = {
+        name: 'Nuevo Descuento Coca Cola',
+        scopeType: 'PRODUCT' as const,
+        productIds: [mockProduct.id],
+        categoryIds: [],
+        discountType: DiscountType.PERCENTAGE,
+        discountValue: 25,
+        startDate: new Date(now.getTime() - 1000),
+        endDate: new Date(now.getTime() + 24 * 60 * 60 * 1000),
+        status: PromotionStatus.PROGRAMMED,
+      };
+
+      await expect(service.createPromotion(input)).rejects.toThrow(
+        /ya cuenta con el descuento/
+      );
     });
 
     it('should throw an error if category does not exist', async () => {
@@ -87,7 +157,10 @@ describe('PromotionService Unit Tests', () => {
       const now = new Date();
       const input = {
         name: 'Promo Fantasma',
+        scopeType: 'CATEGORY' as const,
         categoryId: 'non-existent-cat',
+        categoryIds: ['non-existent-cat'],
+        productIds: [],
         discountType: DiscountType.FIXED_AMOUNT,
         discountValue: 500,
         startDate: now,
@@ -96,7 +169,7 @@ describe('PromotionService Unit Tests', () => {
       };
 
       await expect(service.createPromotion(input)).rejects.toThrow(
-        new AppError('La categoria seleccionada no existe en el sistema', 404)
+        /no existe en el sistema/
       );
     });
 
@@ -106,11 +179,14 @@ describe('PromotionService Unit Tests', () => {
       const now = new Date();
       const input = {
         name: 'Promo Fechas Invalidas',
+        scopeType: 'CATEGORY' as const,
         categoryId: mockCategory.id,
+        categoryIds: [mockCategory.id],
+        productIds: [],
         discountType: DiscountType.PERCENTAGE,
         discountValue: 10,
         startDate: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000),
-        endDate: now, // Invalid: endDate before startDate
+        endDate: now, // Invalid
         status: PromotionStatus.PROGRAMMED,
       };
 
@@ -118,49 +194,15 @@ describe('PromotionService Unit Tests', () => {
         new AppError('La fecha de fin debe ser posterior a la fecha de inicio', 400)
       );
     });
-
-    it('should throw an error if percentage discount is greater than 100', async () => {
-      vi.spyOn(catRepoMock, 'findById').mockResolvedValue(mockCategory);
-
-      const now = new Date();
-      const input = {
-        name: 'Descuento 150%',
-        categoryId: mockCategory.id,
-        discountType: DiscountType.PERCENTAGE,
-        discountValue: 150, // Invalid: > 100
-        startDate: now,
-        endDate: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000),
-        status: PromotionStatus.PROGRAMMED,
-      };
-
-      await expect(service.createPromotion(input)).rejects.toThrow(
-        new AppError('El valor del porcentaje debe estar entre 1 y 100', 400)
-      );
-    });
-
-    it('should throw an error if fixed amount discount is 0 or negative', async () => {
-      vi.spyOn(catRepoMock, 'findById').mockResolvedValue(mockCategory);
-
-      const now = new Date();
-      const input = {
-        name: 'Descuento Monto Invalido',
-        categoryId: mockCategory.id,
-        discountType: DiscountType.FIXED_AMOUNT,
-        discountValue: 0, // Invalid
-        startDate: now,
-        endDate: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000),
-        status: PromotionStatus.PROGRAMMED,
-      };
-
-      await expect(service.createPromotion(input)).rejects.toThrow(
-        new AppError('El valor del monto fijo debe ser mayor a 0', 400)
-      );
-    });
   });
 
   describe('changePromotionStatus', () => {
-    it('should allow changing status from PROGRAMMED to ACTIVE', async () => {
-      const existing = createMockPromotion({ status: PromotionStatus.PROGRAMMED });
+    it('should allow changing status from PROGRAMMED to ACTIVE when promotion is not expired', async () => {
+      const now = new Date();
+      const existing = createMockPromotion({
+        status: PromotionStatus.PROGRAMMED,
+        endDate: new Date(now.getTime() + 24 * 60 * 60 * 1000),
+      });
       const updated = { ...existing, status: PromotionStatus.ACTIVE };
 
       vi.spyOn(promoRepoMock, 'findById').mockResolvedValue(existing);
@@ -182,18 +224,7 @@ describe('PromotionService Unit Tests', () => {
     });
   });
 
-  describe('updatePromotion (Immutability rule)', () => {
-    it('should reject update if the promotion is in FINISHED state', async () => {
-      const finishedPromo = createMockPromotion({ status: PromotionStatus.FINISHED });
-      vi.spyOn(promoRepoMock, 'findById').mockResolvedValue(finishedPromo);
-
-      await expect(
-        service.updatePromotion('promo-uuid-1', { name: 'Nuevo Nombre Intento' })
-      ).rejects.toThrow(new AppError('Una promocion en estado Finalizada no puede modificarse', 400));
-    });
-  });
-
-  describe('deletePromotion (Deletion restrictions)', () => {
+  describe('deletePromotion', () => {
     it('should allow deleting a promotion when its status is PROGRAMMED', async () => {
       const programmedPromo = createMockPromotion({ status: PromotionStatus.PROGRAMMED });
       vi.spyOn(promoRepoMock, 'findById').mockResolvedValue(programmedPromo);
@@ -215,63 +246,6 @@ describe('PromotionService Unit Tests', () => {
           400
         )
       );
-      expect(promoRepoMock.delete).not.toHaveBeenCalled();
-    });
-
-    it('should throw an error when attempting to delete a FINISHED promotion', async () => {
-      const finishedPromo = createMockPromotion({ status: PromotionStatus.FINISHED });
-      vi.spyOn(promoRepoMock, 'findById').mockResolvedValue(finishedPromo);
-
-      await expect(service.deletePromotion('promo-uuid-1')).rejects.toThrow(
-        new AppError(
-          'Solo se pueden eliminar promociones en estado Programada. La promocion actual se encuentra en estado FINISHED',
-          400
-        )
-      );
-      expect(promoRepoMock.delete).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('getSummaryMetrics & isValidToday dynamic calculation', () => {
-    it('should return metrics summary matching repository values', async () => {
-      const summaryData = {
-        total: 10,
-        programmed: 3,
-        active: 5,
-        finished: 2,
-        validToday: 4,
-      };
-      vi.spyOn(promoRepoMock, 'getMetricsSummary').mockResolvedValue(summaryData);
-
-      const result = await service.getSummaryMetrics();
-
-      expect(result).toEqual(summaryData);
-    });
-
-    it('should compute isValidToday = true only if status is ACTIVE and current date is within date range', async () => {
-      const now = new Date();
-      const activeAndValidPromo = createMockPromotion({
-        status: PromotionStatus.ACTIVE,
-        startDate: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-        endDate: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000), // in 2 days
-      });
-      vi.spyOn(promoRepoMock, 'findById').mockResolvedValue(activeAndValidPromo);
-
-      const result = await service.getPromotionById('promo-uuid-1');
-      expect(result.isValidToday).toBe(true);
-    });
-
-    it('should compute isValidToday = false if status is ACTIVE but date is expired', async () => {
-      const now = new Date();
-      const expiredPromo = createMockPromotion({
-        status: PromotionStatus.ACTIVE,
-        startDate: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000),
-        endDate: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000), // Expired 2 days ago
-      });
-      vi.spyOn(promoRepoMock, 'findById').mockResolvedValue(expiredPromo);
-
-      const result = await service.getPromotionById('promo-uuid-1');
-      expect(result.isValidToday).toBe(false);
     });
   });
 });

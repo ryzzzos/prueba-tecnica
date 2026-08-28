@@ -3,12 +3,20 @@ import { Button } from '@heroui/react';
 import { Toaster } from 'sileo';
 import {
   RefreshCw,
-  ShieldCheck,
+  Store,
+  Receipt,
+  TrendingUp,
+  Settings,
 } from 'lucide-react';
 import { usePromotions } from './hooks/usePromotions.ts';
 import { useCategories } from './hooks/useCategories.ts';
-import { Navbar } from './components/layout/Navbar.tsx';
-import { SummaryKpis } from './components/promotions/SummaryKpis.tsx';
+import { useProducts } from './hooks/useProducts.ts';
+import { DashboardSidebar } from './components/layout/DashboardSidebar.tsx';
+import { DashboardHeader } from './components/layout/DashboardHeader.tsx';
+import { DashboardSectionId } from './components/layout/dashboardNavigation.ts';
+import { ModuleSkeletonPlaceholder } from './components/layout/ModuleSkeletonPlaceholder.tsx';
+import { CatalogPage } from './components/catalog/CatalogPage.tsx';
+import { PromotionMetricGrid } from './components/promotions/PromotionMetricGrid.tsx';
 import { PromotionFilters } from './components/promotions/PromotionFilters.tsx';
 import { PromotionTable } from './components/promotions/PromotionTable.tsx';
 import { PromotionFormModal } from './components/promotions/PromotionFormModal.tsx';
@@ -22,6 +30,9 @@ export default function App() {
       window.matchMedia('(prefers-color-scheme: dark)').matches
     );
   });
+
+  const [activeSection, setActiveSection] = useState<DashboardSectionId>('promotions');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null);
@@ -43,8 +54,9 @@ export default function App() {
   } = usePromotions();
 
   const { categories } = useCategories();
+  const { products } = useProducts();
 
-  // Dark Mode side effect
+  // Dark Mode synchronization
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -55,7 +67,6 @@ export default function App() {
     }
   }, [isDarkMode]);
 
-  // Handlers
   const toggleTheme = () => {
     setIsDarkMode((prev) => !prev);
   };
@@ -92,90 +103,150 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--surface-1)] text-[var(--text-primary)] transition-colors flex flex-col selection:bg-indigo-600 selection:text-white">
-      {/* Physics-based Toast Notification Provider */}
+    <div className="min-h-screen bg-[var(--surface-1)] text-[var(--text-primary)] transition-colors flex">
+      {/* Sileo Toast Notifications */}
       <Toaster position="top-right" theme={isDarkMode ? 'dark' : 'light'} />
 
-      {/* 1. Header / Navbar */}
-      <Navbar
-        isDarkMode={isDarkMode}
-        onToggleTheme={toggleTheme}
-        onOpenCreateModal={handleOpenCreateModal}
+      {/* 1. Left Fixed Sidebar Navigation */}
+      <DashboardSidebar
+        activeSection={activeSection}
+        onSelectSection={setActiveSection}
+        mobileOpen={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
       />
 
-      {/* 2. Main Dashboard Content */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 space-y-6">
-        {/* Top Action & Status Rail */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--text-primary)] tracking-tight">
-              Gestion de Promociones
-            </h1>
-            <p className="text-sm text-[var(--text-secondary)] mt-1">
-              Supervision de reglas comerciales, estados de vigencia y disponibilidad en puntos de venta.
-            </p>
-          </div>
+      {/* 2. Main Application Area */}
+      <div className="flex-1 flex flex-col min-w-0 lg:pl-72">
+        {/* Top Header */}
+        <DashboardHeader
+          activeSection={activeSection}
+          isDarkMode={isDarkMode}
+          onToggleTheme={toggleTheme}
+          onOpenMobileMenu={() => setMobileMenuOpen(true)}
+          onOpenCreateModal={handleOpenCreateModal}
+        />
 
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="flat"
-              startContent={<RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />}
-              onClick={() => refetch()}
-              isDisabled={loading || summaryLoading}
-              className="bg-[var(--surface-2)] text-[var(--text-secondary)] border border-[var(--border-strong)] rounded-xl shadow-sm"
-            >
-              Actualizar
-            </Button>
-          </div>
-        </div>
+        {/* Content Container */}
+        <main
+          className={`flex-1 max-w-[1400px] w-full mx-auto ${
+            activeSection === 'promotions' || activeSection === 'categories'
+              ? 'p-6 sm:p-8 lg:p-10 space-y-8'
+              : 'p-4 sm:p-6 lg:p-7 flex flex-col justify-between min-h-0'
+          }`}
+        >
+          {/* Section A: Promotions Management (Active Module) */}
+          {activeSection === 'promotions' && (
+            <div className="space-y-8">
+              {/* Title and Refresh Action */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+                <div>
+                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[var(--text-primary)] tracking-tight">
+                    Gestión de Promociones
+                  </h2>
+                  <p className="text-sm sm:text-base text-[var(--text-secondary)] mt-1.5 max-w-2xl leading-relaxed">
+                    Supervisión de reglas comerciales, estados de vigencia y disponibilidad en puntos de venta.
+                  </p>
+                </div>
 
-        {/* 4. KPI Metric Cards */}
-        <SummaryKpis summary={summary} loading={summaryLoading} />
+                <div className="flex items-center gap-3">
+                  <Button
+                    size="md"
+                    variant="flat"
+                    startContent={<RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />}
+                    onClick={() => refetch()}
+                    isDisabled={loading || summaryLoading}
+                    className="bg-[var(--surface-2)] text-[var(--text-primary)] border border-[var(--border-strong)] rounded-[var(--radius-lg)] shadow-[var(--shadow-sm)] font-semibold h-11 px-4 hover:bg-[var(--surface-3)] transition-all cursor-pointer"
+                  >
+                    Actualizar
+                  </Button>
+                </div>
+              </div>
 
-        {/* 5. Filters Rail */}
-        <div className="pt-2">
-          <PromotionFilters
-            filters={filters}
-            categories={categories}
-            onFilterChange={setFilters}
-            onReset={handleResetFilters}
-          />
-        </div>
+              {/* KPI Cards */}
+              <PromotionMetricGrid summary={summary} loading={summaryLoading} />
 
-        {/* 6. Promotions Interactive Table */}
-        <div className="pt-1">
-          <PromotionTable
-            promotions={promotions}
-            loading={loading}
-            onEdit={handleOpenEditModal}
-            onChangeStatus={(id, status) => changePromotionStatus(id, status)}
-            onRequestDelete={handleRequestDelete}
-            actionLoading={actionLoading}
-          />
-        </div>
-      </main>
+              {/* Filter Bar */}
+              <PromotionFilters
+                filters={filters}
+                categories={categories}
+                onFilterChange={setFilters}
+                onReset={handleResetFilters}
+              />
 
-      {/* 7. Footer */}
-      <footer className="border-t border-[var(--border-strong)] bg-[var(--surface-2)]/60 py-6 mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[var(--text-muted)]">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-indigo-600" />
-            <span>Kodigo Fuente POS Module - Arquitectura Modular & Design Tokens</span>
-          </div>
-          <div>
-            <span>PostgreSQL + Prisma + Express (Node.js) + React 19 + HeroUI</span>
-          </div>
-        </div>
-      </footer>
+              {/* Interactive Promotions Table */}
+              <PromotionTable
+                promotions={promotions}
+                loading={loading}
+                onEdit={handleOpenEditModal}
+                onChangeStatus={(id, status) => changePromotionStatus(id, status)}
+                onRequestDelete={handleRequestDelete}
+                actionLoading={actionLoading}
+              />
+            </div>
+          )}
 
-      {/* 8. Modals */}
+          {/* Section B: Catalog & Products Module (1:1 with Citas Services) */}
+          {activeSection === 'categories' && <CatalogPage />}
+
+          {/* Section C: POS Terminals (Skeleton Placeholder Module) */}
+          {activeSection === 'pos' && (
+            <ModuleSkeletonPlaceholder
+              title="Terminales y Cajas de Venta POS"
+              subtitle="Monitorea las cajas registradoras activas, el estado de sincronización del motor de promociones y la aplicación offline de descuentos en tienda física."
+              icon={Store}
+              variant="terminals"
+              estimatedRelease="Kódigo POS v2.0 - Retail Hardware Sync"
+              onGoToPromotions={() => setActiveSection('promotions')}
+            />
+          )}
+
+          {/* Section D: Sales & Redemptions (Skeleton Placeholder Module) */}
+          {activeSection === 'sales' && (
+            <ModuleSkeletonPlaceholder
+              title="Transacciones y Canjes de Descuento"
+              subtitle="Auditoría fiscal en tiempo real de cada ticket emitido con descuentos porcentuales y montos fijos aplicados por cajero."
+              icon={Receipt}
+              variant="transactions"
+              estimatedRelease="Kódigo POS v2.0 - Fiscal Audit Ledger"
+              onGoToPromotions={() => setActiveSection('promotions')}
+            />
+          )}
+
+          {/* Section E: Analytics & Impact (Skeleton Placeholder Module) */}
+          {activeSection === 'analytics' && (
+            <ModuleSkeletonPlaceholder
+              title="Impacto Comercial y Conversión"
+              subtitle="Métricas de elasticidad de precios, productos más vendidos bajo descuento y rentabilidad por departamento."
+              icon={TrendingUp}
+              variant="analytics"
+              estimatedRelease="Kódigo POS v2.0 - Business Analytics Suite"
+              onGoToPromotions={() => setActiveSection('promotions')}
+            />
+          )}
+
+          {/* Section F: POS Settings (Skeleton Placeholder Module) */}
+          {activeSection === 'settings' && (
+            <ModuleSkeletonPlaceholder
+              title="Configuración y Reglas Globales"
+              subtitle="Límites de descuento por cajero supervisor, políticas de acumulación de ofertas y claves de API de integración."
+              icon={Settings}
+              variant="settings"
+              estimatedRelease="Kódigo POS v2.0 - Enterprise Admin"
+              onGoToPromotions={() => setActiveSection('promotions')}
+            />
+          )}
+        </main>
+      </div>
+
+      {/* 3. Global Modals */}
       <PromotionFormModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onSubmitCreate={createPromotion}
         onSubmitUpdate={updatePromotion}
         categories={categories}
+        products={products}
+        promotions={promotions}
         initialData={editingPromotion}
         loading={actionLoading}
       />

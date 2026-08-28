@@ -1,6 +1,6 @@
 {
   "name": "promotions-backend",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Backend API for Promotions Management Module (Kódigo Fuente)",
   "main": "dist/server.js",
   "scripts": {
@@ -25,6 +25,8 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "prisma": "^6.4.0",
+    "tsx": "^4.19.3",
     "zod": "^3.24.2"
   },
   "devDependencies": {
@@ -34,12 +36,18 @@
     "@typescript-eslint/eslint-plugin": "^8.24.1",
     "@typescript-eslint/parser": "^8.24.1",
     "eslint": "^9.20.1",
-    "prisma": "^6.4.0",
-    "tsx": "^4.19.3",
     "typescript": "^5.7.3",
     "vitest": "^3.0.6"
   },
   "engines": {
     "node": ">=20.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "prisma",
+      "esbuild"
+    ]
   }
 }

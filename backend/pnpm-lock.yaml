@@ -20,6 +20,12 @@ importers:
       express:
         specifier: ^4.21.2
         version: 4.22.2
+      prisma:
+        specifier: ^6.4.0
+        version: 6.19.3(typescript@5.9.3)
+      tsx:
+        specifier: ^4.19.3
+        version: 4.23.12
       zod:
         specifier: ^3.24.2
         version: 3.25.76
@@ -42,12 +48,6 @@ importers:
       eslint:
         specifier: ^9.20.1
         version: 9.39.5(jiti@2.7.0)
-      prisma:
-        specifier: ^6.4.0
-        version: 6.19.3(typescript@5.9.3)
-      tsx:
-        specifier: ^4.19.3
-        version: 4.23.12
       typescript:
         specifier: ^5.7.3
         version: 5.9.3

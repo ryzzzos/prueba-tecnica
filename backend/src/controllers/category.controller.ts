@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { categoryService } from '../services/category.service.js';
-import { createCategorySchema } from '../schemas/category.schema.js';
+import { createCategorySchema, updateCategorySchema } from '../schemas/category.schema.js';
 
 export const getCategories = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -28,6 +28,25 @@ export const createCategory = async (req: Request, res: Response, next: NextFunc
     const validatedData = createCategorySchema.parse(req.body);
     const category = await categoryService.createCategory(validatedData);
     res.status(201).json({ data: category });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateCategory = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const validatedData = updateCategorySchema.parse(req.body);
+    const category = await categoryService.updateCategory(req.params.id, validatedData);
+    res.status(200).json({ data: category });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteCategory = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const result = await categoryService.deleteCategory(req.params.id);
+    res.status(200).json(result);
   } catch (error) {
     next(error);
   }

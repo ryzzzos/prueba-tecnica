@@ -9,6 +9,10 @@ export const PromotionStatusEnum = z.nativeEnum(PromotionStatus, {
   errorMap: () => ({ message: 'Estado de promocion invalido. Opciones: PROGRAMMED, ACTIVE, FINISHED' }),
 });
 
+export const ScopeTypeEnum = z.enum(['CATEGORY', 'PRODUCT'], {
+  errorMap: () => ({ message: 'Alcance invalido. Opciones: CATEGORY, PRODUCT' }),
+});
+
 export const createPromotionSchema = z
   .object({
     name: z
@@ -16,9 +20,11 @@ export const createPromotionSchema = z
       .trim()
       .min(2, 'El nombre debe tener al menos 2 caracteres')
       .max(150, 'El nombre no puede exceder 150 caracteres'),
-    categoryId: z
-      .string({ required_error: 'La categoria asociada es obligatoria' })
-      .uuid('El ID de la categoria debe ser un UUID valido'),
+    scopeType: ScopeTypeEnum.optional().default('CATEGORY'),
+    categoryId: z.string().uuid().optional().nullable(),
+    categoryIds: z.array(z.string().uuid()).optional().default([]),
+    productId: z.string().uuid().optional().nullable(),
+    productIds: z.array(z.string().uuid()).optional().default([]),
     discountType: DiscountTypeEnum,
     discountValue: z
       .number({ required_error: 'El valor del descuento es obligatorio' })
@@ -47,12 +53,34 @@ export const createPromotionSchema = z
         });
       }
     }
+
+    // Validation: Scope target must have at least one selection
+    const hasCategory = (data.categoryIds && data.categoryIds.length > 0) || Boolean(data.categoryId);
+    const hasProduct = (data.productIds && data.productIds.length > 0) || Boolean(data.productId);
+
+    if (data.scopeType === 'CATEGORY' && !hasCategory) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Debe seleccionar al menos una categoria para la promocion',
+        path: ['categoryIds'],
+      });
+    } else if (data.scopeType === 'PRODUCT' && !hasProduct) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Debe seleccionar al menos un producto para la promocion',
+        path: ['productIds'],
+      });
+    }
   });
 
 export const updatePromotionSchema = z
   .object({
     name: z.string().trim().min(2).max(150).optional(),
-    categoryId: z.string().uuid().optional(),
+    scopeType: ScopeTypeEnum.optional(),
+    categoryId: z.string().uuid().optional().nullable(),
+    categoryIds: z.array(z.string().uuid()).optional(),
+    productId: z.string().uuid().optional().nullable(),
+    productIds: z.array(z.string().uuid()).optional(),
     discountType: DiscountTypeEnum.optional(),
     discountValue: z.number().positive().optional(),
     startDate: z.coerce.date().optional(),
@@ -86,6 +114,7 @@ export const changePromotionStatusSchema = z.object({
 export const promotionQuerySchema = z.object({
   status: PromotionStatusEnum.optional(),
   categoryId: z.string().uuid().optional(),
+  productId: z.string().uuid().optional(),
   search: z.string().optional(),
 });
 
