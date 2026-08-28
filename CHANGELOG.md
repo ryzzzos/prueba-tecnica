@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.3] - 2026-08-28
+
+### Fixed
+- Updated Queso Mozzarella product image URL in database seed to verified high-resolution asset.
+- Implemented robust `onError` fallback handling in `ProductThumbnail` and `ProductCardImage` components to gracefully render placeholder icons if external image network requests fail.
+- Refactored product database seeding to use `upsert` by SKU, ensuring existing environments receive catalog data and image updates without manual database resets.
+
 ## [1.1.2] - 2026-08-28
 
 ### Added

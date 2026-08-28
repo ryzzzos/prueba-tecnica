@@ -27,93 +27,99 @@ async function main() {
 
   console.log(`[SUCCESS] Seeded ${categories.length} categories.`);
 
-  // 2. Seed Sample Products
-  const existingProductsCount = await prisma.product.count();
-  const products = [];
-  if (existingProductsCount === 0) {
-    const sampleProducts = [
-      {
-        name: 'Coca Cola Sin Azúcar 1.5L',
-        description: 'Bebida gaseosa refrescante sin calorías en botella retornable',
-        price: new Prisma.Decimal(4500),
-        sku: 'BEB-001',
-        imageUrl: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=600&auto=format&fit=crop&q=80',
-        isActive: true,
-        categoryId: categories[0].id,
-      },
-      {
-        name: 'Jugo Natural Naranja 1L',
-        description: 'Jugo 100% fruta pasteurizado sin azúcar añadida',
-        price: new Prisma.Decimal(6200),
-        sku: 'BEB-002',
-        imageUrl: 'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=600&auto=format&fit=crop&q=80',
-        isActive: true,
-        categoryId: categories[0].id,
-      },
-      {
-        name: 'Papas Fritas Artesanales Sal Marina 150g',
-        description: 'Papas crujientes con sal marina natural libre de grasas trans',
-        price: new Prisma.Decimal(5500),
-        sku: 'SNK-001',
-        imageUrl: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=600&auto=format&fit=crop&q=80',
-        isActive: true,
-        categoryId: categories[1].id,
-      },
-      {
-        name: 'Chocolate Amargo 70% Cacao 80g',
-        description: 'Tableta de chocolate fino de origen colombiano',
-        price: new Prisma.Decimal(8900),
-        sku: 'SNK-002',
-        imageUrl: 'https://images.unsplash.com/photo-1548907040-4baa42d10919?w=600&auto=format&fit=crop&q=80',
-        isActive: true,
-        categoryId: categories[1].id,
-      },
-      {
-        name: 'Leche Entera Larga Vida 1L',
-        description: 'Leche entera ultrapasteurizada enriquecida con vitaminas A y D',
-        price: new Prisma.Decimal(4200),
-        sku: 'LAC-001',
-        imageUrl: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=600&auto=format&fit=crop&q=80',
-        isActive: true,
-        categoryId: categories[2].id,
-      },
-      {
-        name: 'Queso Mozzarella Tajado 250g',
-        description: 'Queso semi-graso ideal para sándwiches y pizzas',
-        price: new Prisma.Decimal(9800),
-        sku: 'LAC-002',
-        imageUrl: 'https://images.unsplash.com/photo-1589881133803-a4e068f1b6dd?w=600&auto=format&fit=crop&q=80',
-        isActive: true,
-        categoryId: categories[2].id,
-      },
-      {
-        name: 'Pan Tajado Integral con Semillas 500g',
-        description: 'Pan horneado con masa madre, chía, lino y avena',
-        price: new Prisma.Decimal(6800),
-        sku: 'PAN-001',
-        imageUrl: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=600&auto=format&fit=crop&q=80',
-        isActive: true,
-        categoryId: categories[3].id,
-      },
-      {
-        name: 'Detergente Líquido Ropa Concentrado 2L',
-        description: 'Fórmula biodegradable con poder quitamanchas activo',
-        price: new Prisma.Decimal(24900),
-        sku: 'LMP-001',
-        imageUrl: 'https://images.unsplash.com/photo-1585421514738-01798e348b17?w=600&auto=format&fit=crop&q=80',
-        isActive: true,
-        categoryId: categories[5].id,
-      },
-    ];
+  // 2. Seed Sample Products with Upsert
+  const sampleProducts = [
+    {
+      name: 'Coca Cola Sin Azúcar 1.5L',
+      description: 'Bebida gaseosa refrescante sin calorías en botella retornable',
+      price: new Prisma.Decimal(4500),
+      sku: 'BEB-001',
+      imageUrl: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=600&auto=format&fit=crop&q=80',
+      isActive: true,
+      categoryId: categories[0].id,
+    },
+    {
+      name: 'Jugo Natural Naranja 1L',
+      description: 'Jugo 100% fruta pasteurizado sin azúcar añadida',
+      price: new Prisma.Decimal(6200),
+      sku: 'BEB-002',
+      imageUrl: 'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=600&auto=format&fit=crop&q=80',
+      isActive: true,
+      categoryId: categories[0].id,
+    },
+    {
+      name: 'Papas Fritas Artesanales Sal Marina 150g',
+      description: 'Papas crujientes con sal marina natural libre de grasas trans',
+      price: new Prisma.Decimal(5500),
+      sku: 'SNK-001',
+      imageUrl: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=600&auto=format&fit=crop&q=80',
+      isActive: true,
+      categoryId: categories[1].id,
+    },
+    {
+      name: 'Chocolate Amargo 70% Cacao 80g',
+      description: 'Tableta de chocolate fino de origen colombiano',
+      price: new Prisma.Decimal(8900),
+      sku: 'SNK-002',
+      imageUrl: 'https://images.unsplash.com/photo-1548907040-4baa42d10919?w=600&auto=format&fit=crop&q=80',
+      isActive: true,
+      categoryId: categories[1].id,
+    },
+    {
+      name: 'Leche Entera Larga Vida 1L',
+      description: 'Leche entera ultrapasteurizada enriquecida con vitaminas A y D',
+      price: new Prisma.Decimal(4200),
+      sku: 'LAC-001',
+      imageUrl: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=600&auto=format&fit=crop&q=80',
+      isActive: true,
+      categoryId: categories[2].id,
+    },
+    {
+      name: 'Queso Mozzarella Tajado 250g',
+      description: 'Queso semi-graso ideal para sándwiches y pizzas',
+      price: new Prisma.Decimal(9800),
+      sku: 'LAC-002',
+      imageUrl: 'https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=600&auto=format&fit=crop&q=80',
+      isActive: true,
+      categoryId: categories[2].id,
+    },
+    {
+      name: 'Pan Tajado Integral con Semillas 500g',
+      description: 'Pan horneado con masa madre, chía, lino y avena',
+      price: new Prisma.Decimal(6800),
+      sku: 'PAN-001',
+      imageUrl: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=600&auto=format&fit=crop&q=80',
+      isActive: true,
+      categoryId: categories[3].id,
+    },
+    {
+      name: 'Detergente Líquido Ropa Concentrado 2L',
+      description: 'Fórmula biodegradable con poder quitamanchas activo',
+      price: new Prisma.Decimal(24900),
+      sku: 'LMP-001',
+      imageUrl: 'https://images.unsplash.com/photo-1585421514738-01798e348b17?w=600&auto=format&fit=crop&q=80',
+      isActive: true,
+      categoryId: categories[5].id,
+    },
+  ];
 
-    for (const p of sampleProducts) {
-      const createdProd = await prisma.product.create({ data: p });
-      products.push(createdProd);
-    }
-    console.log(`[SUCCESS] Seeded ${products.length} sample products.`);
-  } else {
-    console.log('[INFO] Products already exist, skipping sample products seed.');
+  const products = [];
+  for (const p of sampleProducts) {
+    const product = await prisma.product.upsert({
+      where: { sku: p.sku },
+      update: {
+        name: p.name,
+        description: p.description,
+        price: p.price,
+        imageUrl: p.imageUrl,
+        isActive: p.isActive,
+        categoryId: p.categoryId,
+      },
+      create: p,
+    });
+    products.push(product);
   }
+  console.log(`[SUCCESS] Seeded/Updated ${products.length} products.`);
 
   // 3. Seed Sample Promotions (only if none exist)
   const existingPromotionsCount = await prisma.promotion.count();

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { LayoutGrid, Package } from 'lucide-react';
 import AppIcon from '../ui/AppIcon.tsx';
 import { Product } from '../../types/product.types.ts';
@@ -21,7 +21,9 @@ function formatPrice(value: number | string): string {
 }
 
 function ProductThumbnail({ product }: { product: Product }) {
-  if (!product.imageUrl) {
+  const [hasError, setHasError] = useState(false);
+
+  if (!product.imageUrl || hasError) {
     return (
       <div
         className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-1)] text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] border border-[var(--border-strong)]"
@@ -38,6 +40,29 @@ function ProductThumbnail({ product }: { product: Product }) {
       alt={`Imagen ${product.name}`}
       className="h-12 w-12 shrink-0 rounded-xl object-cover border border-[var(--border-strong)]"
       loading="lazy"
+      onError={() => setHasError(true)}
+    />
+  );
+}
+
+function ProductCardImage({ product }: { product: Product }) {
+  const [hasError, setHasError] = useState(false);
+
+  if (!product.imageUrl || hasError) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center bg-[var(--surface-1)]">
+        <AppIcon icon={LayoutGrid} className="text-[var(--border-strong)]" size="lg" />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={product.imageUrl}
+      alt={product.name}
+      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+      loading="lazy"
+      onError={() => setHasError(true)}
     />
   );
 }
@@ -138,18 +163,7 @@ export const CatalogList: React.FC<CatalogListProps> = ({
               >
                 {/* Image header */}
                 <div className="relative aspect-[16/10] w-full bg-[var(--surface-1)] overflow-hidden border-b border-[var(--border-strong)]">
-                  {product.imageUrl ? (
-                    <img
-                      src={product.imageUrl}
-                      alt={product.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center bg-[var(--surface-1)]">
-                      <AppIcon icon={LayoutGrid} className="text-[var(--border-strong)]" size="lg" />
-                    </div>
-                  )}
+                  <ProductCardImage product={product} />
 
                   <div className="absolute left-3 top-3 z-10">
                     <StatusBadge active={product.isActive} />
