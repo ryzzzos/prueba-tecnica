@@ -1,13 +1,14 @@
 {
   "name": "promotions-backend",
   "version": "1.1.0",
+  "type": "module",
   "description": "Backend API for Promotions Management Module (Kódigo Fuente)",
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc && prisma generate",
     "start": "node dist/server.js",
-    "lint": "eslint src/**/*.ts",
+    "lint": "eslint src tests",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

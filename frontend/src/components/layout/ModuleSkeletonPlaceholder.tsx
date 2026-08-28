@@ -24,43 +24,37 @@ export const ModuleSkeletonPlaceholder: React.FC<ModuleSkeletonPlaceholderProps>
 }) => {
   return (
     <div className="flex flex-col h-full justify-between gap-3.5 sm:gap-4 max-w-full overflow-hidden">
-      {/* 1. Header Banner (Compact & Responsive) */}
-      <div className="relative overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border-strong)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--app-primary)_10%,var(--surface-2)),var(--surface-2))] p-4 sm:p-5 shadow-[var(--shadow-sm)] shrink-0">
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3.5 min-w-0">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[linear-gradient(135deg,#1d4ed8,#9333ea)] text-white shadow-sm">
-              <AppIcon icon={Icon} size="md" className="text-white" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
-                  <Sparkles className="w-2.5 h-2.5" />
-                  Módulo en Sincronización
-                </span>
-                <span className="text-[11px] text-[var(--text-muted)] font-medium truncate">
-                  {estimatedRelease}
-                </span>
-              </div>
-              <h2 className="text-lg sm:text-xl font-black tracking-tight text-[var(--text-primary)] truncate mt-0.5">
+      {/* 1. Header Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0 rounded-[var(--radius-xl)] border border-[var(--border-strong)] bg-[var(--surface-2)] p-4 sm:p-5 shadow-[var(--shadow-sm)]">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center w-10 h-10 rounded-[var(--radius-md)] bg-[var(--app-primary)] shadow-[var(--shadow-sm)] shrink-0">
+            <AppIcon icon={Icon} className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg sm:text-xl font-bold tracking-tight text-[var(--text-primary)] truncate">
                 {title}
               </h2>
-              <p className="text-xs text-[var(--text-secondary)] truncate hidden md:block mt-0.5">
-                {subtitle}
-              </p>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[var(--app-primary)] text-white shadow-sm">
+                <Sparkles className="w-3 h-3" />
+                Próximamente
+              </span>
             </div>
-          </div>
-
-          <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-auto">
-            <Button
-              size="sm"
-              onClick={onGoToPromotions}
-              className="bg-[var(--surface-2)] hover:bg-[var(--surface-3)] text-[var(--text-primary)] font-semibold border border-[var(--border-strong)] rounded-[var(--radius-md)] shadow-sm h-8 px-3 text-xs"
-              endContent={<ArrowRight className="w-3 h-3" />}
-            >
-              Ver Promociones Activas
-            </Button>
+            <p className="text-xs text-[var(--text-secondary)] mt-1">
+              {subtitle} &bull; Previsto en {estimatedRelease}
+            </p>
           </div>
         </div>
+        {onGoToPromotions && (
+          <Button
+            size="sm"
+            className="bg-[var(--app-primary)] text-white font-medium shadow-[var(--shadow-sm)] shrink-0"
+            onPress={onGoToPromotions}
+            endContent={<ArrowRight className="w-4 h-4" />}
+          >
+            Ir a Promociones
+          </Button>
+        )}
       </div>
 
       {/* 2. Sub-navigation / View Switcher (Compact) */}
