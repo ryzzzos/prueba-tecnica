@@ -119,12 +119,16 @@ async function main() {
   const existingPromotionsCount = await prisma.promotion.count();
   if (existingPromotionsCount === 0) {
     const now = new Date();
+    const allProducts = products.length > 0 ? products : await prisma.product.findMany();
 
     const samplePromotions = [
       {
         name: 'Super Descuento Bebidas de Verano',
+        scopeType: 'PRODUCT',
         categoryId: categories[0].id,
-        productId: products[0]?.id || null,
+        productId: allProducts[0]?.id || null,
+        categories: { connect: [{ id: categories[0].id }] },
+        products: allProducts[0] ? { connect: [{ id: allProducts[0].id }] } : undefined,
         discountType: DiscountType.PERCENTAGE,
         discountValue: new Prisma.Decimal(20), // 20%
         startDate: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000), // Hace 2 dias
@@ -133,8 +137,10 @@ async function main() {
       },
       {
         name: 'Promo 2x1 en Snacks Salados',
+        scopeType: 'CATEGORY',
         categoryId: categories[1].id,
         productId: null,
+        categories: { connect: [{ id: categories[1].id }] },
         discountType: DiscountType.FIXED_AMOUNT,
         discountValue: new Prisma.Decimal(1500), // $1500 de descuento fijo
         startDate: new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000), // Manana
@@ -143,8 +149,10 @@ async function main() {
       },
       {
         name: 'Rebajas Especiales Lacteos Premium',
+        scopeType: 'CATEGORY',
         categoryId: categories[2].id,
         productId: null,
+        categories: { connect: [{ id: categories[2].id }] },
         discountType: DiscountType.PERCENTAGE,
         discountValue: new Prisma.Decimal(15), // 15%
         startDate: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000), // Hace 10 dias

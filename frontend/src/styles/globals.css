@@ -186,20 +186,4 @@ body {
   }
 }
 
-/* Sileo Toast Theme Overrides */
-:root {
-  --sileo-fill: #0f172a !important;
-  --sileo-text: #ffffff !important;
-  --sileo-z-index: 2147483647 !important;
-}
 
-.dark {
-  --sileo-fill: #ffffff !important;
-  --sileo-text: #09090b !important;
-}
-
-[data-sileo-viewport],
-[data-sileo-toast],
-[data-sileo-viewport] * {
-  z-index: 2147483647 !important;
-}

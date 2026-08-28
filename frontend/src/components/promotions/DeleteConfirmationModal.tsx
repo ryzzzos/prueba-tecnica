@@ -33,9 +33,10 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
       isOpen={isOpen}
       onClose={onClose}
       size="md"
+      placement="center"
       backdrop="blur"
       classNames={{
-        base: 'bg-[var(--surface-2)] border border-[var(--border-strong)] rounded-[var(--radius-2xl)] shadow-2xl overflow-hidden my-auto',
+        base: 'bg-[var(--surface-2)] border border-[var(--border-strong)] rounded-[var(--radius-2xl)] shadow-2xl overflow-hidden',
         header: 'border-b border-[var(--border-soft)] py-5 px-6 bg-[var(--surface-2)]',
         body: 'py-6 px-6 space-y-4',
         footer: 'border-t border-[var(--border-soft)] py-4 px-6 bg-[var(--surface-2)]',

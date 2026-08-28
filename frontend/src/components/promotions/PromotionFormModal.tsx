@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Tag,
@@ -285,7 +286,9 @@ export const PromotionFormModal: React.FC<PromotionFormModalProps> = ({
     }
   };
 
-  return (
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <>
@@ -308,7 +311,7 @@ export const PromotionFormModal: React.FC<PromotionFormModalProps> = ({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
-            className="pointer-events-auto fixed right-0 top-0 bottom-0 z-[85] flex w-[92vw] max-w-[540px] h-full flex-col overflow-hidden rounded-l-[var(--radius-2xl)] border-l border-[var(--border-strong)] bg-[var(--surface-2)] shadow-[var(--shadow-lg)]"
+            className="pointer-events-auto fixed inset-y-0 right-0 top-0 bottom-0 z-[85] flex w-[92vw] max-w-[540px] h-screen max-h-screen h-[100dvh] flex-col overflow-hidden rounded-l-[var(--radius-2xl)] border-l border-[var(--border-strong)] bg-[var(--surface-2)] shadow-[var(--shadow-lg)]"
             aria-hidden={!isOpen}
           >
             {/* Header */}
@@ -588,7 +591,8 @@ export const PromotionFormModal: React.FC<PromotionFormModalProps> = ({
           </motion.aside>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 

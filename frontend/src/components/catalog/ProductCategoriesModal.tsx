@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronRight, Pencil, Trash2, Layers, Check, X } from 'lucide-react';
 import { sileo } from 'sileo';
@@ -34,18 +35,18 @@ export const ProductCategoriesModal: React.FC<ProductCategoriesModalProps> = ({
     e.preventDefault();
     if (!newName.trim()) return;
 
-    setSavingAction(true);
     try {
+      setSavingAction(true);
       await onCreateCategory({
         name: newName.trim(),
         description: newDesc.trim() || undefined,
       });
-      sileo.success({
-        title: 'Categoría Creada',
-        description: `La categoría "${newName.trim()}" se guardó correctamente.`,
-      });
       setNewName('');
       setNewDesc('');
+      sileo.success({
+        title: 'Categoría Creada',
+        description: `Se creó "${newName.trim()}" exitosamente.`,
+      });
     } catch (err) {
       sileo.error({
         title: 'Error al crear categoría',
@@ -60,15 +61,14 @@ export const ProductCategoriesModal: React.FC<ProductCategoriesModalProps> = ({
     e.preventDefault();
     if (!editName.trim()) return;
 
-    setSavingAction(true);
     try {
+      setSavingAction(true);
       await onUpdateCategory(cat.id, { name: editName.trim() });
+      setEditingId(null);
       sileo.success({
         title: 'Categoría Actualizada',
-        description: `Se renombró a "${editName.trim()}".`,
+        description: 'Los cambios fueron guardados.',
       });
-      setEditingId(null);
-      setEditName('');
     } catch (err) {
       sileo.error({
         title: 'Error al actualizar categoría',
@@ -81,12 +81,12 @@ export const ProductCategoriesModal: React.FC<ProductCategoriesModalProps> = ({
 
   const handleDelete = async (cat: Category) => {
     const confirmed = window.confirm(
-      `¿Deseas eliminar la categoría "${cat.name}"? Los productos asociados pasarán a "Sin categoría".`
+      `¿Deseas eliminar la categoría "${cat.name}"? Los productos asociados quedarán sin categoría.`
     );
     if (!confirmed) return;
 
-    setSavingAction(true);
     try {
+      setSavingAction(true);
       await onDeleteCategory(cat.id);
       sileo.success({
         title: 'Categoría Eliminada',
@@ -107,7 +107,9 @@ export const ProductCategoriesModal: React.FC<ProductCategoriesModalProps> = ({
     setEditName(cat.name);
   };
 
-  return (
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <AnimatePresence>
       {open && (
         <>
@@ -130,7 +132,7 @@ export const ProductCategoriesModal: React.FC<ProductCategoriesModalProps> = ({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
-            className="pointer-events-auto fixed right-0 top-0 bottom-0 z-[100] flex w-[92vw] max-w-[460px] h-full flex-col overflow-hidden rounded-l-[var(--radius-2xl)] border-l border-[var(--border-strong)] bg-[var(--surface-2)] shadow-[var(--shadow-lg)]"
+            className="pointer-events-auto fixed inset-y-0 right-0 top-0 bottom-0 z-[100] flex w-[92vw] max-w-[460px] h-screen max-h-screen h-[100dvh] flex-col overflow-hidden rounded-l-[var(--radius-2xl)] border-l border-[var(--border-strong)] bg-[var(--surface-2)] shadow-[var(--shadow-lg)]"
             aria-hidden={!open}
           >
             {/* Header */}
@@ -286,7 +288,8 @@ export const ProductCategoriesModal: React.FC<ProductCategoriesModalProps> = ({
           </motion.aside>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 

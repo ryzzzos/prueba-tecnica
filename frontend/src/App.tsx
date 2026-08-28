@@ -105,7 +105,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[var(--surface-1)] text-[var(--text-primary)] transition-colors flex">
       {/* Sileo Toast Notifications */}
-      <Toaster position="top-right" theme={isDarkMode ? 'dark' : 'light'} />
+      <Toaster position="top-center"/>
 
       {/* 1. Left Fixed Sidebar Navigation */}
       <DashboardSidebar

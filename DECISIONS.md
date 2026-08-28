@@ -1,176 +1,183 @@
-# Architecture Decision Records (ADR) — Módulo de Gestión de Promociones
+# Architecture Decision Records (ADR) — Plataforma de Gestión de Promociones
 
-Este documento recopila de manera formal y justificada las decisiones de arquitectura, diseño de software, patrones de ingeniería y selección de tecnologías adoptadas en el proyecto.
-
----
-
-## ADR-001: Gestor de Paquetes — `pnpm` sobre `npm` / `yarn`
-
-### Contexto
-Se requiere un gestor de paquetes rápido, eficiente en el uso de almacenamiento y compatible con pipelines de CI/CD basados en Docker y GitHub Actions.
-
-### Decisión
-Adoptar **`pnpm`** (versión 10+) tanto para backend como frontend.
-
-### Justificación
-1. **Rendimiento e Instalación Determinista:** Almacenamiento basado en *hard links* y contenido direccionable, reduciendo los tiempos de instalación hasta en un 60% frente a `npm` en pipelines de CI.
-2. **Aislamiento de Dependencias (No Phantom Dependencies):** Estructura estricta de `node_modules` que impide que el código acceda a paquetes transitivos no declarados en `package.json`, elevando la confiabilidad del build.
-3. **Eficiencia en Contenedores Docker:** Menor huella de disco al construir capas multi-stage.
+En este documento recopilo y justifico las decisiones de arquitectura, diseño de software, patrones de ingeniería y selección de tecnologías que tomé a lo largo del desarrollo de este proyecto.
 
 ---
 
-## ADR-002: Base de Datos Relacional y Precisión Numérica (PostgreSQL + Prisma)
+## ADR-001: Elección de `pnpm` como Gestor de Paquetes
 
 ### Contexto
-La gestión de promociones para puntos de venta (POS) involucra transacciones comerciales, porcentajes y relaciones estrictas entre categorías de productos y reglas de descuento. La prueba exige un mínimo de 2 tablas/colecciones.
+Para este proyecto necesitaba un gestor de dependencias rápido, eficiente con el espacio en disco y confiable para los pipelines de CI/CD y los contenedores de Docker.
 
 ### Decisión
-Adoptar **PostgreSQL 16** gestionado mediante **Prisma ORM** con tipos **`Decimal(10, 2)`** para los montos de descuento e identificadores únicos basados en **UUID**.
+Elegí **`pnpm`** (versión 10+) tanto para el backend como para el frontend.
 
 ### Justificación
-1. **Integridad Referencial y Restricciones:** PostgreSQL ofrece soporte nativo para claves foráneas con políticas de eliminación (`onDelete: Restrict`), garantizando que no se eliminen categorías con promociones asociadas.
-2. **Precisión Financiera (Evitar Floating Point Issues):** El tipo `Decimal(10,2)` previene imprecisiones de redondeo de punto flotante IEEE 754 comunes al usar `FLOAT`/`DOUBLE` en cálculos de descuentos monetarios.
-3. **Type-Safety de Extremo a Extremo:** Prisma genera tipos TypeScript 1:1 con el esquema, eliminando discrepancias entre el modelo en base de datos y la capa de aplicación.
+1. **Rendimiento e Instalación Determinista:** Gracias a su almacenamiento basado en *hard links* y contenido direccionable, reduje drásticamente los tiempos de instalación (hasta un 60% más rápido frente a `npm` en pipelines de CI).
+2. **Aislamiento Estricto de Dependencias (*No Phantom Dependencies*):** `pnpm` crea una estructura estricta en `node_modules` que impide que el código acceda accidentalmente a dependencias transitivas no declaradas en el `package.json`, garantizando builds 100% predecibles.
+3. **Eficiencia en Imágenes Docker:** Optimiza el almacenamiento al reutilizar paquetes en las capas de compilación multi-stage.
 
 ---
 
-## ADR-003: Validación Fail-Fast de Variables de Entorno (Zod)
+## ADR-002: Base de Datos Relacional y Precisión Financiera (PostgreSQL 16 + Prisma)
 
 ### Contexto
-En arquitecturas distribuidas y entornos Docker/CI-CD, arranques con configuraciones incompletas o variables ausentes (`DATABASE_URL`, `PORT`) provocan fallos tardíos en tiempo de ejecución (*runtime*) difíciles de diagnosticar.
+El sistema gestiona promociones, descuentos porcentuales y monetarios, productos y categorías comerciales para un punto de venta (POS). Los cálculos financieros y las relaciones de negocio exigían integridad referencial absoluta y tipos numéricos de alta precisión.
 
 ### Decisión
-Implementar un módulo de configuración centralizado (`src/config/env.ts`) que valida todas las variables requeridas usando **Zod** durante la inicialización del proceso antes de levantar el servidor HTTP.
+Opté por **PostgreSQL 16** gestionado a través de **Prisma ORM**, modelando los montos con el tipo **`Decimal(10, 2)`** e identificadores únicos basados en **UUID**.
 
 ### Justificación
-1. **Principio Fail-Fast:** Si falta una variable crítica o el formato es inválido (ej. URL mal formada), el proceso se detiene inmediatamente con un log explicativo legible.
-2. **Seguridad y Tipado:** Proporciona un objeto `env` fuertemente tipado e inmutable para el resto de la aplicación.
+1. **Integridad Referencial Estricta:** Implementé claves foráneas con restricciones (`onDelete: Restrict`) para asegurar que una categoría no pueda ser eliminada si tiene promociones o productos vinculados.
+2. **Cero Errores de Punto Flotante:** Utilicé `Decimal(10, 2)` en lugar de `FLOAT`/`DOUBLE` para evitar los clásicos errores de redondeo de la norma IEEE 754 al calcular descuentos y precios de productos.
+3. **Tipado Fuerte de Extremo a Extremo:** Prisma me genera tipos en TypeScript que sincronizan 1:1 la base de datos con la capa de servicios, eliminando discrepancias de datos.
 
 ---
 
-## ADR-004: Diseño y Comportamiento del Endpoint de Salud (`GET /health`)
+## ADR-003: Validación Fail-Fast de Variables de Entorno con Zod
 
 ### Contexto
-El requerimiento obligatorio exige que `/health` responda `200 OK` únicamente cuando la aplicación y su conexión a la base de datos estén 100% operativas.
+En despliegues con Docker o en la nube, arrancar una aplicación con variables de entorno faltantes o mal formadas suele generar errores tardíos en runtime que son difíciles de depurar.
 
 ### Decisión
-El endpoint `/health` ejecuta una consulta activa (`SELECT 1` de base de datos a través de Prisma) antes de responder `200 OK`. Si la base de datos está caída o inaccesible, el endpoint retorna `503 Service Unavailable` con el detalle del servicio degradado.
+Creé un módulo centralizado (`src/config/env.ts`) que valida todas las variables requeridas usando **Zod** en el momento exacto en que inicia el proceso, antes de levantar el servidor Express.
 
 ### Justificación
-1. **Verificación Real de Disponibilidad (Liveness + Readiness):** Garantiza que los balanceadores de carga, Docker Compose healthchecks y el pipeline de CI/CD solo consideren el servicio como disponible cuando puede procesar lecturas/escrituras en BD.
-2. **Estructura Estándar de Monitoreo:**
-   ```json
-   {
-     "status": "ok",
-     "timestamp": "2026-08-27T16:00:00.000Z",
-     "services": {
-       "database": {
-         "status": "connected",
-         "latencyMs": 3
-       }
-     },
-     "uptime": 45.2
-   }
-   ```
+1. **Principio Fail-Fast:** Si falta alguna variable crítica (como `DATABASE_URL` o `PORT`) o si el formato es inválido, detengo el proceso de inmediato con un mensaje claro en la consola.
+2. **Seguridad e Inmutabilidad:** Expongo un objeto `env` fuertemente tipado e inmutable para el resto del backend, evitando el uso disperso de `process.env`.
+
+---
+
+## ADR-004: Endpoint de Salud con Verificación Activa (`GET /health`)
+
+### Contexto
+El healthcheck debía reflejar el estado real de la aplicación y su conectividad con la base de datos, no solo responder un texto estático.
+
+### Decisión
+Diseñé el endpoint `/health` para que ejecute una consulta activa (`SELECT 1` mediante Prisma) a PostgreSQL antes de retornar `200 OK`. Si la base de datos no responde, retorno `503 Service Unavailable` indicando el servicio afectado.
+
+### Justificación
+1. **Monitoreo Real (Liveness & Readiness):** Permite que Docker Compose, los balanceadores de carga y los pipelines de CI/CD sepan con certeza cuándo el contenedor está verdaderamente listo para procesar tráfico.
+2. **Estructura Estándar:** Devuelvo métricas de latencia de base de datos, estado y uptime en un JSON estructurado y fácil de consumir por herramientas de observabilidad.
 
 ---
 
 ## ADR-005: Estándar de Código Limpio, Logging Estructurado y Política Cero Emojis
 
 ### Contexto
-El software de nivel empresarial y los pipelines automatizados de observabilidad requieren logs limpios, parseables e independientes de caracteres decorativos o incompatibilidades de terminales / codificación UTF.
+Para mantener una calidad de nivel de producción corporativo, los logs y el código deben ser profesionales, limpios y fácilmente analizables por herramientas automáticas.
 
 ### Decisión
-Establecer una política estricta de **cero emojis** en la totalidad del repositorio (código fuente, comentarios, logs de servidor, mensajes de commit, documentación y respuestas de API). El logging utiliza identificadores estándar por nivel: `[INFO]`, `[WARN]`, `[ERROR]`, `[FATAL]`, `[SUCCESS]`.
+Adopté una política estricta de **cero emojis** en todo el repositorio (código, comentarios, logs, commits y documentación). En su lugar, implementé logs estructurados con etiquetas estándar: `[INFO]`, `[WARN]`, `[ERROR]`, `[FATAL]`, `[SUCCESS]`, `[DEBUG]`.
 
 ### Justificación
-1. **Observabilidad y Compatibilidad en CI/CD:** Los parsers de logs (CloudWatch, Datadog, ELK, GitHub Actions runners) procesan sin ambigüedad texto plano estructurado.
-2. **Profesionalismo y Calidad de Código:** Alineación con estándares de código de producción de alta exigencia corporativa.
+1. **Compatibilidad en CI/CD y Terminales:** Evita problemas de renderizado de caracteres UTF en entornos Linux/Docker y facilita el parseo de logs en herramientas como Datadog, CloudWatch o ELK.
+2. **Legibilidad y Profesionalismo:** Garantiza un formato homogéneo y sobrio acorde a estándares de software empresarial.
 
 ---
 
-## ADR-006: Arquitectura en Capas y Patrones de Backend en Node.js (TypeScript)
+## ADR-006: Arquitectura en Capas y Desacoplamiento en Node.js (TypeScript)
 
 ### Contexto
-La lógica de negocio de promociones posee reglas e invariantes complejas (máquinas de estado, validación de porcentajes, inmutabilidad de promociones finalizadas, restricciones de eliminación condicional).
+La lógica comercial de promociones incluye máquinas de estado (`PROGRAMMED` -> `ACTIVE` -> `FINISHED`), validación de vigencias temporales, restricciones de inmutabilidad y alcances por categorías o productos. Mezclar esto con el transporte HTTP o las consultas SQL crearía código espagueti difícil de mantener.
 
 ### Decisión
-Adoptar una arquitectura limpia y modular desacoplada por capas:
-- `routes/`: Enrutamiento y vinculación de middlewares.
-- `controllers/`: Manejo de peticiones HTTP, extracción de parámetros y respuestas.
-- `services/`: Lógica de dominio pura, validación de reglas de negocio y transiciones de estado.
-- `repositories/`: Capa de persistencia y consultas Prisma aisladas.
-- `schemas/`: Validación de contratos de entrada y salida con Zod.
+Organicé el backend bajo una arquitectura en capas limpias con inversión de dependencias:
+- `routes/`: Define las rutas HTTP y asocia los middlewares.
+- `controllers/`: Procesa peticiones, valida entradas con Zod y devuelve códigos de estado HTTP adecuados.
+- `services/`: Contiene la lógica de negocio pura, la máquina de estados y las reglas de dominio.
+- `repositories/`: Capa de persistencia que interactúa directamente con Prisma.
+- `schemas/`: Contratos de validación de entrada/salida tipados con Zod.
 
 ### Justificación
-1. **Testeabilidad Aislada:** Los servicios pueden ser testeados de manera unitaria con mocks de repositorios sin necesidad de levantar el servidor Express o la base de datos.
-2. **Mantenibilidad y Escalabilidad:** Cambios en el transporte HTTP o en el motor de persistencia no afectan las reglas de negocio de la aplicación.
+1. **Pruebas Unitarias Aisladas:** Pude probar toda la lógica de los servicios con Vitest simulando los repositorios mediante mocks, sin necesidad de levantar Express ni la base de datos real.
+2. **Mantenibilidad:** Si en el futuro se decide cambiar Prisma o Express, la lógica de negocio permanece intacta.
 
 ---
 
-## ADR-007: Arquitectura Frontend, Vite y Sistema de Tokens Visuales (Design Tokens)
+## ADR-007: Sistema de Diseño con Design Tokens y React 19 + Vite
 
 ### Contexto
-Se requiere una interfaz de usuario de alto impacto, receptiva y con consistencia visual rigurosa sin depender de valores hardcodeados de estilos arbitrarios.
+Buscaba una interfaz moderna, limpia y pulida con influencia estética de Apple, que soportara modo claro y oscuro de manera nativa sin recurrir a colores ni sombras arbitrarias *hardcodeadas*.
 
 ### Decisión
-Estructurar el frontend en **React 19 + Vite + TypeScript + Tailwind CSS** utilizando un sistema formal de **Design Tokens** centralizados mediante variables CSS en `globals.css` (`--surface-*`, `--border-*`, `--shadow-*`, `--radius-*`, `--text-*`, `--color-*`).
+Construí el frontend con **React 19**, **Vite** y **Tailwind CSS**, implementando un sistema formal de **Design Tokens** mediante variables CSS en `globals.css` (`--surface-*`, `--border-*`, `--shadow-*`, `--radius-*`, `--text-*`, `--color-*`).
 
 ### Justificación
-1. **Consistencia Visual y Escalabilidad:** Los componentes consumen variables semánticas centralizadas, permitiendo soporte nativo para temas (Light/Dark mode) y armonía geométrica de radios de borde.
-2. **Performance y Velocidad de Bundling:** Vite proporciona *Hot Module Replacement* (HMR) ultrarrápido con compilaciones optimizadas mediante Rollup/esbuild.
-3. **Cero Estilos Hardcodeados:** Previene divergencias visuales en badges, sombras y modales a lo largo de la aplicación.
+1. **Consistencia Visual:** Todos los componentes consumen tokens semánticos, garantizando que el cambio entre tema claro y oscuro sea instantáneo y uniforme.
+2. **Jerarquía Geométrica de Radios:** Definí una escala armónica donde los contenedores externos usan radios mayores (`rounded-2xl` / `rounded-xl`) y los elementos hijos internos escalan proporcionalmente hacia radios menores (`rounded-lg` / `rounded-md`).
+3. **Velocidad de Desarrollo:** Vite me brindó un entorno de desarrollo con *Hot Module Replacement* (HMR) inmediato y compilaciones de producción altamente optimizadas.
 
 ---
 
-## ADR-008: Adopción de HeroUI (React Aria + Framer Motion) para la Capa de Componentes UI
+## ADR-008: Componentes Interactivos con HeroUI, Framer Motion y React Portals
 
 ### Contexto
-El desarrollo de interfaces de usuario para módulos de gestión comercial requiere componentes interactivos complejos (tablas con ordenamiento, modales, drawers, selects personalizados accesibles y badges de estado) que cumplan con altos estándares de usabilidad y accesibilidad sin reinventar componentes atómicos desde cero.
+Los formularios de creación, edición y administración de categorías requerían una experiencia fluida sin saltos visuales, mientras que los modales y *drawers* no debían sufrir desalineaciones provocadas por contenedores padres o scroll.
 
 ### Decisión
-Integrar **HeroUI (`@heroui/react`)** sobre Tailwind CSS y Framer Motion como la biblioteca base de componentes de interfaz de usuario.
+Utilicé **HeroUI (`@heroui/react`)** junto con **Framer Motion** para las transiciones (`ease: [0.32, 0.72, 0, 1]`), y envolví los paneles deslizables (*Drawers*) en **React Portals (`createPortal`)** montados directamente en `document.body`.
 
 ### Justificación
-1. **Accesibilidad Nativa (WAI-ARIA):** Construida sobre primitivos de React Aria, garantizando soporte completo de navegación por teclado, focus management y lectores de pantalla.
-2. **Coherencia y Microinteracciones:** Se sincroniza perfectamente con el sistema de tokens CSS de `globals.css` y aporta animaciones fluidas impulsadas por Framer Motion.
-3. **Time-to-Market y Mantenibilidad:** Reduce drásticamente la deuda técnica en el desarrollo de selectores, diálogos modales y tablas de datos, permitiendo focalizar el esfuerzo en la lógica de negocio y la experiencia de usuario.
+1. **Accesibilidad WAI-ARIA:** Manejo nativo de foco, navegación por teclado y lectores de pantalla provisto por React Aria.
+2. **Eliminación de Desplazamientos:** Montar los modales en el `body` a través de Portals evita que hereden paddings, márgenes o transformaciones de contenedores intermedios del dashboard, asegurando que cubran exactamente el 100% de la altura de la pantalla (`h-[100dvh]`).
 
 ---
 
-## ADR-009: Orquestación Multi-Contenedor (Docker Compose) y Servidor Nginx para SPAs
+## ADR-009: Regla de Descuento Único y Validación de Solapamiento Temporal
 
 ### Contexto
-El despliegue local y en entornos de staging debe ser determinista, aislado y reproducible mediante un único comando (`docker-compose up`). La aplicación frontend (SPA de Vite) requiere un servidor HTTP eficiente con soporte de enrutamiento del lado del cliente.
+En el punto de venta, un mismo producto no puede tener dos promociones activas o programadas simultáneamente en el mismo rango de fechas, ya que generaría ambigüedad en el cálculo de la caja registradora.
 
 ### Decisión
-1. **Multi-Stage Builds:** Dockerfiles optimizados para backend y frontend, separando la fase de compilación de la fase de ejecución para reducir el tamaño de las imágenes finales.
-2. **Servidor Nginx para Frontend:** Nginx Alpine para servir los archivos estáticos de Vite con compresión Gzip, caché de assets inmutables y directiva `try_files $uri $uri/ /index.html` para soportar navegación SPA.
-3. **Orquestación con Healthchecks Coordinados:** `docker-compose.yml` gestiona `db`, `backend` y `frontend`, usando `depends_on: { condition: service_healthy }` para garantizar que el backend no intente conectarse antes de que PostgreSQL esté listo.
-
----
-
-## ADR-010: Pipeline de CI/CD Automatizado con GitHub Actions y Smoke Testing Integrado
-
-### Contexto
-Se requiere garantizar que ningún cambio de código rompa la compilación, las pruebas unitarias o la disponibilidad del sistema en contenedores antes de llegar a ramas principales.
-
-### Decisión
-Implementar un pipeline de GitHub Actions (`.github/workflows/ci.yml`) con 3 etapas dependientes y secuenciales:
-1. `lint-and-test`: Ejecución de verificación de tipos (TypeScript), linter y pruebas unitarias de backend (Vitest) y frontend.
-2. `docker-build`: Construcción y validación de las imágenes Docker de backend y frontend.
-3. `smoke-test`: Despliegue automatizado con `docker compose up -d`, sondeo de disponibilidad y verificación activa del endpoint `/health` esperando código `200 OK`. Si el status es diferente o hay fallas en base de datos, el pipeline falla de forma explícita.
-
----
-
-## ADR-011: Estrategia de Migraciones y Semilla Automática en Producción (Prisma Migrate & Seed)
-
-### Contexto
-Al inicializar la base de datos en contenedores limpios, las tablas deben crearse de forma no interactiva y con datos base de categorías comerciales.
-
-### Decisión
-El contenedor de backend ejecuta en su secuencia de arranque `prisma migrate deploy` (equivalente de producción a `alembic upgrade head`) seguido de `prisma db seed` antes de iniciar el servidor Express.
+Implementé una validación de negocio en el backend (`validateNoOverlappingDiscounts` en `promotion.service.ts`) y un aviso en tiempo real en el frontend que detecta colisiones de fechas tanto para asignaciones directas de productos como indirectas por categorías.
 
 ### Justificación
-1. **Despliegues Idempotentes:** Las migraciones registradas en `prisma/migrations` se aplican secuencialmente sin requerir intervención manual.
-2. **Disponibilidad Inmediata de Datos:** Garantiza que el POS disponga de las categorías por defecto en el primer arranque.
+1. **Consistencia en el POS:** Se previene a nivel de base de datos y API que dos promociones apliquen al mismo producto en un rango de fechas coincidente (`[startDate, endDate]`).
+2. **Experiencia de Usuario Proactiva:** El drawer de creación advierte al usuario antes de enviar el formulario si algún producto seleccionado ya cuenta con un descuento activo en ese horario.
+
+---
+
+## ADR-010: Despliegue Multi-Contenedor (Docker Compose) y Nginx para SPA
+
+### Contexto
+El proyecto debía ser 100% reproducible tanto en desarrollo local como en producción mediante un solo comando (`docker compose up`).
+
+### Decisión
+Configuré dos entornos con Docker Compose:
+1. **Modo Desarrollo (`docker-compose.dev.yml`):** Con volúmenes montados y Hot Reload en vivo para frontend (Vite) y backend (`tsx watch`).
+2. **Modo Producción (`docker-compose.yml`):** Con *multi-stage builds*, backend compilado a JavaScript nativo y frontend servido por un contenedor **Nginx Alpine** optimizado.
+
+### Justificación
+1. **Soporte Completo de SPA:** Configuré Nginx con `try_files $uri $uri/ /index.html` y compresión Gzip para que la navegación cliente funcione a la perfección sin errores 404 al recargar rutas.
+2. **Orquestación Coordinada:** Utilicé `depends_on` condicionado al estado saludable (`service_healthy`) de PostgreSQL para que el backend nunca intente conectarse antes de que la base de datos esté lista.
+
+---
+
+## ADR-011: Pipeline de Integración Continua con GitHub Actions y Smoke Testing
+
+### Contexto
+Para garantizar que ningún cambio rompa el build o la funcionalidad, implementé un pipeline automatizado en cada *pull request* y *push* a la rama `main`.
+
+### Decisión
+Diseñé el workflow `.github/workflows/ci.yml` dividido en tres fases secuenciales:
+1. `lint-and-test`: Typecheck estricto con TypeScript, linter y suite completa de pruebas unitarias en Vitest.
+2. `docker-build`: Construcción y verificación de las imágenes Docker de backend y frontend.
+3. `smoke-test`: Despliegue automatizado con `docker compose up -d`, sondeo de disponibilidad y consulta real al endpoint `/health` esperando código `200 OK`.
+
+### Justificación
+Garantiza que el código no solo compile y pase las pruebas unitarias, sino que el sistema completo sea capaz de levantarse, conectarse a PostgreSQL y responder peticiones reales dentro de contenedores Docker.
+
+---
+
+## ADR-012: Migraciones y Semilla Automática de Datos (Prisma Migrate & Seed)
+
+### Contexto
+Al inicializar el proyecto por primera vez en Docker, era indispensable que la base de datos creara sus tablas y se poblara automáticamente con un catálogo realista de categorías y productos sin requerir comandos manuales adicionales.
+
+### Decisión
+Configuré el script de entrada de los contenedores para que ejecute secuencialmente `prisma migrate deploy` (aplica las migraciones pendientes) y `prisma db seed` (inserta categorías comerciales y productos iniciales) antes de encender el servidor.
+
+### Justificación
+1. **Idempotencia:** Las migraciones registradas en `prisma/migrations` se aplican de manera ordenada y segura sin alterar datos existentes.
+2. **Experiencia *Out-of-the-Box*:** Cualquier evaluador o reclutador que clone el repositorio y ejecute `docker compose up` encontrará la plataforma lista para usar con datos reales desde el primer segundo.
