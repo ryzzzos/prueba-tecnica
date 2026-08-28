@@ -1,0 +1,182 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # =======================================================
+  # Stage 1: Lint, Typecheck & Unit Tests
+  # =======================================================
+  lint-and-test:
+    name: Lint, Typecheck & Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install pnpm Package Manager
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+          run_install: false
+
+      - name: Get pnpm Store Directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm Cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      # Backend Checks
+      - name: Install Backend Dependencies
+        working-directory: ./backend
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        working-directory: ./backend
+        run: pnpm prisma generate
+
+      - name: Typecheck Backend (TypeScript)
+        working-directory: ./backend
+        run: pnpm tsc --noEmit
+
+      - name: Run Backend Unit Tests (Vitest)
+        working-directory: ./backend
+        run: pnpm test
+
+      # Frontend Checks
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Frontend SPA
+        working-directory: ./frontend
+        run: pnpm build
+
+  # =======================================================
+  # Stage 2: Docker Images Build
+  # =======================================================
+  docker-build:
+    name: Build Docker Images
+    needs: [lint-and-test]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Backend Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: false
+          tags: promotions-backend:latest
+          load: true
+
+      - name: Build Frontend Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: false
+          tags: promotions-frontend:latest
+          load: true
+
+  # =======================================================
+  # Stage 3: Integration Smoke Test (Docker Compose + Healthcheck)
+  # =======================================================
+  smoke-test:
+    name: Integration Smoke Test
+    needs: [docker-build]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Validate Required Environment Template
+        run: |
+          if [ ! -f .env.example ]; then
+            echo "[FATAL] .env.example file is missing from repository root"
+            exit 1
+          fi
+
+      - name: Initialize Environment Variables
+        run: |
+          cp .env.example .env
+          echo "DB_USER=postgres" >> .env
+          echo "DB_PASSWORD=postgres" >> .env
+          echo "DB_NAME=promotions_db" >> .env
+          echo "PORT=8000" >> .env
+          echo "DATABASE_URL=postgresql://postgres:postgres@db:5432/promotions_db?schema=public" >> .env
+          echo "VITE_API_URL=http://localhost:8000/api/v1" >> .env
+
+      - name: Spin Up Docker Compose Environment
+        run: |
+          docker compose up --build -d
+
+      - name: Wait for Services Healthiness & Verify /health Endpoint
+        run: |
+          echo "[INFO] Waiting for backend and database services to initialize..."
+          
+          MAX_RETRIES=30
+          RETRY_COUNT=0
+          HEALTH_URL="http://localhost:8000/health"
+          
+          until curl -s -f -o /dev/null "$HEALTH_URL" || [ $RETRY_COUNT -ge $MAX_RETRIES ]; do
+            echo "[INFO] Service not ready yet... (Attempt: $((RETRY_COUNT + 1))/$MAX_RETRIES)"
+            sleep 2
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+          done
+          
+          if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
+            echo "[ERROR] Backend service failed to become healthy within timeout window."
+            echo "[INFO] Printing Docker logs for diagnostics:"
+            docker compose logs
+            docker compose down -v
+            exit 1
+          fi
+          
+          echo "[SUCCESS] Service is responding! Performing full healthcheck inspection:"
+          HTTP_RESPONSE=$(curl -s "$HEALTH_URL")
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL")
+          
+          echo "[INFO] Healthcheck HTTP Status: $HTTP_STATUS"
+          echo "[INFO] Healthcheck Payload: $HTTP_RESPONSE"
+          
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "[ERROR] Healthcheck returned non-200 status code: $HTTP_STATUS"
+            docker compose logs
+            docker compose down -v
+            exit 1
+          fi
+          
+          echo "[SUCCESS] Smoke test passed with 200 OK and verified database connection."
+
+      - name: Teardown Environment
+        if: always()
+        run: |
+          docker compose down -v

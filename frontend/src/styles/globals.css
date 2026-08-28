@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Design Tokens & CSS Variables Standard */
+:root {
+  /* Brand Accent */
+  --app-primary: #4f46e5;
+  --app-primary-strong: #4338ca;
+  --app-primary-subtle: rgba(79, 70, 229, 0.08);
+
+  /* Light Theme Surfaces */
+  --surface-0: #e2e8f0;
+  --surface-1: #f8fafc;
+  --surface-2: #ffffff;
+  --surface-3: #f1f5f9;
+  --surface-glass: rgba(255, 255, 255, 0.78);
+
+  /* Borders */
+  --border-soft: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --glass-border: rgba(255, 255, 255, 0.7);
+
+  /* Shadows (Elevations) */
+  --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.03);
+  --shadow-md: 0 4px 14px -2px rgba(15, 23, 42, 0.07), 0 2px 6px -2px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 16px 32px -4px rgba(15, 23, 42, 0.09), 0 4px 12px -4px rgba(15, 23, 42, 0.04);
+  --glass-shadow: 0 8px 32px -8px rgba(15, 23, 42, 0.08);
+
+  /* Typography Colors */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+
+  /* Border Radii Hierarchy */
+  --radius-xs: 0.375rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.5rem;
+
+  /* Semantic Status Colors */
+  --color-programmed: #6366f1;
+  --color-active: #10b981;
+  --color-finished: #64748b;
+  --color-pending: #f59e0b;
+  --color-info: #0284c7;
+  --color-error: #ef4444;
+  --color-success: #10b981;
+}
+
+/* Dark Theme Variables */
+.dark {
+  --app-primary: #6366f1;
+  --app-primary-strong: #4f46e5;
+  --app-primary-subtle: rgba(99, 102, 241, 0.15);
+
+  /* Dark Theme Surfaces */
+  --surface-0: #090d16;
+  --surface-1: #0f172a;
+  --surface-2: #1e293b;
+  --surface-3: #273549;
+  --surface-glass: rgba(30, 41, 59, 0.78);
+
+  /* Dark Borders */
+  --border-soft: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --glass-border: rgba(255, 255, 255, 0.1);
+
+  /* Dark Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.55);
+  --glass-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.5);
+
+  /* Dark Typography Colors */
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+
+  /* Dark Status Colors */
+  --color-programmed: #818cf8;
+  --color-active: #34d399;
+  --color-finished: #94a3b8;
+  --color-pending: #fbbf24;
+  --color-info: #38bdf8;
+  --color-error: #f87171;
+  --color-success: #34d399;
+}
+
+/* Base Document Styles */
+html,
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  color: var(--text-primary);
+  background-color: var(--surface-1);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Premium Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: var(--radius-lg);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Utility Animations and Layers */
+@layer utilities {
+  .backdrop-blur-glass {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}

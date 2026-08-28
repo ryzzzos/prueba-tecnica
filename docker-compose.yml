@@ -1,0 +1,80 @@
+services:
+  # ==========================================
+  # Database Service: PostgreSQL 16
+  # ==========================================
+  db:
+    image: postgres:16-alpine
+    container_name: promotions_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-promotions_db}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-promotions_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - promotions_network
+
+  # ==========================================
+  # Backend Service: Node.js (Express + Prisma)
+  # ==========================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: promotions_backend
+    restart: unless-stopped
+    environment:
+      PORT: 8000
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-promotions_db}?schema=public
+      CORS_ORIGIN: "*"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - promotions_network
+
+  # ==========================================
+  # Frontend Service: React (Vite SPA + Nginx)
+  # ==========================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000/api/v1}
+    container_name: promotions_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - promotions_network
+
+# ==========================================
+# Volumes & Networks Definitions
+# ==========================================
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  promotions_network:
+    driver: bridge
